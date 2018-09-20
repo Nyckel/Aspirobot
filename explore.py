@@ -27,7 +27,7 @@ class Get_dirt(Action):
         actual_room.has_dirt=false
         actual_room.has_jewel=false
 
-class Get_jewzl(Action):
+class Get_jewel(Action):
     def execute(self):
         actual_room=evironment.grid[Agent.position[0][Agent.position[1]]
         actual_room.has_jewel=false
