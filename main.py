@@ -29,10 +29,9 @@
 
 """
 
-from tkinter import *
-
 from environment import Environment
 from agent import Agent
+from display import Display
 
 
 class Simulation:
@@ -40,36 +39,13 @@ class Simulation:
     def __init__(self):
         self.env = Environment()
         self.agent = Agent(self.env)
-        self.window, self.canvas = self.create_board(self.env.get_grid())
+        self.display = Display()
+
+        self.display.add_grid(self.env.get_grid(), "Environment")
+        # self.display.add_grid(self.agent.get_grid(), "Agent's mental state")
 
         self.is_running = True
-
-        self.window.after(1, self.run)
-        self.window.mainloop()
-
-    def create_board(self, grid):
-        win = Tk()
-        win.title("Aspirobot")
-        win.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-        cv = Canvas(win, width=500, height=500, bd=0)
-        cv.pack()
-
-        self.vacuum_photo = PhotoImage(file="img/vacuum.gif")
-        self.dirt_photo = PhotoImage(file="img/dirt.gif")
-        self.jewel_photo = PhotoImage(file="img/jewel.gif")
-
-        for i in range(len(grid)):
-            for j in range(len(grid[0])):
-                cv.create_rectangle(i * 50, j * 50, (i + 1) * 50, (j + 1) * 50, fill='white')
-                if grid[i][j].has_dirt:
-                    dirt_image = cv.create_image(i*50+1, j*50+25, anchor=NW, image=self.dirt_photo) # TODO: Find how to keep reference to the image
-                if grid[i][j].has_jewel:
-                    jewel_image = cv.create_image(i*50+26, j*50+25, anchor=NW, image=self.jewel_photo)
-
-        vacuum_image = cv.create_image(1, 1, anchor=NW, image=self.vacuum_photo) # TODO: Decide if vacuum should start at 0,0 or somewhere else
-
-        return win, cv
+        self.display.start_loop(self.run)
 
     def run(self):
         if self.is_running:
@@ -77,12 +53,7 @@ class Simulation:
                 self.env.generate_dirt()
             if self.env.should_there_be_a_new_lost_jewel():
                 self.env.generate_jewel()
-        self.window.after(1, self.run)
-
-    def on_closing(self):
-        # TODO: Join all threads
-        self.is_running = False
-        self.window.destroy()
+        self.display.window.after(1, self.run)
 
 
 if __name__ == '__main__':
