@@ -1,6 +1,7 @@
 from agent import Agent
-from agent import Action
 from environment import Environment
+from agent import Action
+
 
 class Up(Action):
     def execute(self):
@@ -13,7 +14,7 @@ class Down(Action):
 		
 class Left(Action):
     def execute(self):
-        Agent.position[0]=Agent.position[0]-
+        Agent.position[0]=Agent.position[0]-1
 		
 
 class Right(Action):
@@ -23,11 +24,14 @@ class Right(Action):
 
 class Get_dirt(Action):
     def execute(self):
-        actual_room=evironement.grid[Agent.position[0][Agent.position[1]]
-        actual_room.has_dirt=false
-        actual_room.has_jewel=false
+        actual_room=Environment.grid[Agent.position[0][Agent.position[1]]]
+        actual_room.has_dirt=False
+        actual_room.has_jewel=False
 
 class Get_jewel(Action):
     def execute(self):
-        actual_room=evironment.grid[Agent.position[0][Agent.position[1]]
-        actual_room.has_jewel=false
+        actual_room=Environment.grid[Agent.position[0][Agent.position[1]]]
+        actual_room.has_jewel=False
+
+
+
