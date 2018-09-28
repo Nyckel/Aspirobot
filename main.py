@@ -48,6 +48,7 @@ class Simulation:
         self.display.start_loop(self.run)
 
     def run(self):
+
         if self.is_running:
             if self.env.should_there_be_a_new_dirty_space():
                 self.env.generate_dirt()
@@ -56,5 +57,12 @@ class Simulation:
         self.display.window.after(1, self.run)
 
 
+
+        self.agent.run()#a mettre ailleur
+
+
+
+
 if __name__ == '__main__':
     Simulation()
+

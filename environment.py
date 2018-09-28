@@ -10,6 +10,7 @@ class Environment:
     PROBA_DIRTY = 0.5
     PROBA_JEWEL = 0.25
 
+
     def __init__(self):
         self.grid = [[None for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
 
@@ -25,6 +26,9 @@ class Environment:
         for i in range(2):
             x, y = self.place_of_new_jewel()
             self.grid[y][x].add_jewel()
+
+
+
 
     def get_grid(self):
         return self.grid
