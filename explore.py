@@ -2,7 +2,7 @@ from agent import Agent
 from environment import Environment
 #from agent import Action
 
-
+"""
 class Effector:
     def Up(self):
         Agent.position[1]=Agent.position[1]-1
@@ -25,7 +25,7 @@ class Effector:
         actual_room=Environment.grid[Agent.position[0][Agent.position[1]]]
         actual_room.has_jewel=False
 
-
+"""
 
 """
 class Up(Action):

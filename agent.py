@@ -49,19 +49,22 @@ class Agent:
     def get_gridRobot(self):
         return self.gridRobot
 
+    def set_position(self,pos):
+        self.position=pos
+
+
     def ObeserveEnvironmentWithAllMySensors(self):
         Captor.IsThereJewel(self.env,self.position)
         Captor.IsThereDirt(self.env,self.position)
 
     def UpdateMyState(self):
         self.gridRobot=Environment.get_grid(self.env)
-        print(self.gridRobot)
 
     def ChooseAnAction(self):
         return 0
 
     def justDoIt(self):
-        Effector.Down(self)
+        Effector.Down(self) #a changer
         return 0
 
     @staticmethod
@@ -86,28 +89,35 @@ class Agent:
 class Effector:
     def Up(self):
         position=Agent.get_position(self)
-        position[1]=position[1]-1
+        if (0 <= position[1] - 1 & position[1] - 1 <= 9):
+            position[1]=position[1]-1
+            Agent.set_position(self,position)
 
     def Down(self):
         position = Agent.get_position(self)
         if(0<=position[1]+1 & position[1]+1<=9):
             position[1]=position[1]+1
+            Agent.set_position(self,position)
 
     def Left(self):
         position = Agent.get_position(self)
-        position[0]=position[0]-1
+        if (0 <= position[0] - 1 & position[0] - 1 <= 9):
+            position[0] =position[0] - 1
+            Agent.set_position(self,position)
 
     def Right(self):
         position = Agent.get_position(self)
-        position[0]=position[0]+1
+        if (0 <= position[0] + 1 & position[0] + 1 <= 9):
+            position[0]=position[0]+1
+            Agent.set_position(self,position)
 
     def Get_dirt(self):
         position = Agent.get_position(self)
-        actual_room=Environment.grid[position[0][position[1]]]
+        actual_room=Environment.grid[position[0]][position[1]]
         actual_room.has_dirt=False
         actual_room.has_jewel=False
 
     def Get_jewel(self):
         position = Agent.get_position(self)
-        actual_room=Environment.grid[position[0][position[1]]]
+        actual_room=Environment.grid[position[0]][position[1]]
         actual_room.has_jewel=False
