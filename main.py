@@ -1,31 +1,31 @@
 """
     8INF846 - Intelligence Artificielle
-    Création d'un agent aspirateur
+    Creation d'un agent aspirateur
 
     Rachel Noireau - Camille Breen - Mathis Ouarnier
 
     Consignes:
-        - Implémentation d'un agent aspirateur qui cherche à nettoyer 100 pièces de la poussière et des bijoux présents
+        - Implementation d'un agent aspirateur qui cherche a nettoyer 100 pieces de la poussiere et des bijoux presents
         - Un thread pour l'agent, un pour l'environement.
-        - Bonus = implémentation d'un module d'apprentissage
+        - Bonus = implementation d'un module d'apprentissage
 
-        1.L’agent et l’environnement doivent s’exécuter sur deux fils d’exécution différents.
-        2.De la poussière et des bijoux doivent être générés sporadiquement par l’environnement.
-        3.L’agent dépense une unité d’électricité par action.
-        4.Si l’agent aspire et qu’un bijou se trouve à cet endroit, l’environnement devrait considérer que
-            celui-ci a été aspiré (le robot n’a pas nécessairement à le savoir, puisqu’il ne l’avait pas perçu)
+        1.L'agent et l’environnement doivent s’executer sur deux fils d’execution differents.
+        2.De la poussiere et des bijoux doivent être generes sporadiquement par l’environnement.
+        3.L’agent depense une unite d’electricite par action.
+        4.Si l’agent aspire et qu’un bijou se trouve a cet endroit, l’environnement devrait considerer que
+            celui-ci a ete aspire (le robot n’a pas necessairement a le savoir, puisqu’il ne l’avait pas perçu)
             –Il perd des points pour ça (dans sa mesure de performance)!
-        5.L’agent doit posséder un état mental BDI.
+        5.L’agent doit posseder un etat mental BDI.
         6.L’agent doit utiliser l’exploration afin de planifier ses actions.
-        7.L’agent doit avoir accès à une heuristique pour effectuer de l’exploration informée.
-        8.L’agent doit apprendre la meilleure fréquence d’exploration par rapport à sa mesure de performance
-            (vous pouvez faire un apprentissage épisodique)
+        7.L’agent doit avoir acces a une heuristique pour effectuer de l’exploration informee.
+        8.L’agent doit apprendre la meilleure frequence d’exploration par rapport a sa mesure de performance
+            (vous pouvez faire un apprentissage episodique)
 
-    Idées pour la mesure de performance :
-        - 1 point par carré propre à chaque intervalle de temps
-        - Mesure pour vérifier qu'il ne nettoie pas toujours la même zone
+    Idees pour la mesure de performance :
+        - 1 point par carre propre a chaque intervalle de temps
+        - Mesure pour verifier qu'il ne nettoie pas toujours la même zone
 
-    Environnement: Complètement observable, Stochastique, Séquentiel, Dynamique, Discret, Mono-agent
+    Environnement: Completement observable, Stochastique, Sequentiel, Dynamique, Discret, Mono-agent
 
 """
 
@@ -62,7 +62,6 @@ class Simulation:
     def run(self):
         Thread(target=self.environment_run).start()
         Thread(target=self.agen_run).start()
-
 
 
 

@@ -121,3 +121,59 @@ class Effector:
         position = Agent.get_position(self)
         actual_room=Environment.grid[position[0]][position[1]]
         actual_room.has_jewel=False
+    def explore_close(self):
+        dest = self.dirt
+        waist = self.dirt.shape
+        min = abs(self.dirt[0][0] - self.position[0][0] + self.dirt[1][0] - self.position[1][0])
+        coord = self.dirt[0]
+        for i in range(1, waist[1]):
+            dest[0][i] = -1
+            dest[1][i] = -1
+            test = abs(self.dirt[0][i] - self.position[0][i] + self.dirt[1][i] - self.position[1][i])
+            if test < min :
+                min = test
+                coord[0]=self.dirt[0][i]
+                coord[1] = self.dirt[1][i]
+
+        if min < 10 :
+             dest[0][0] = coord[0]
+             dest[1][0] = coord[1]
+             return dest;
+
+        return dest;
+
+    def explore_by_area(self):
+        dest = self.dirt
+        waist = self.dirt.shape
+        coord = self.dirt[0]
+        min = abs(self.dirt[0][0] - self.position[0][0] + self.dirt[1][0] - self.position[1][0])
+        for j in range(0, waist[1]):
+            min = min + abs(self.dirt[0][0] - self.dirt[0][0] + self.dirt[1][0] - self.dirt[1][0])
+
+        for i in range(1, waist[1]):
+            test = abs(self.dirt[0][i] - self.position[0][i] + self.dirt[1][i] - self.position[1][i])
+            for j in range(0,waist[1]):
+                test = test + abs(self.dirt[0][i] - self.dirt[0][j] + self.dirt[1][i] - self.dirt[1][j])
+            if test < min:
+                min = test
+                coord[0] = self.dirt[0][i]
+                coord[1] = self.dirt[1][i]
+            dest[0][0] = coord[0]
+            dest[1][0] = coord[1]
+        return destdest;
+
+    def shorter_way(self,dest,node):
+        waist = self.node.shape
+        coord = [-1,-1]
+        lastcoord  = [dest[0][0],dest[1][0]]
+        min = abs(self.node[0][0] - lastcoord[0] + self.node[1][0] - lastcoord[1])
+        for i in range(1, waist[1]):
+            test = abs(self.node[0][i] - lastcoord[0] + self.node[1][i] - lastcoord[1])
+            if test < min:
+                min = test
+                coord[0] = self.node[0][i]
+                coord[1] = self.node[1][i]
+        node.remove(coord)
+        dest.add(coord)
+        lastcoord == coord
+        return dest;
