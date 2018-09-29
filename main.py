@@ -32,11 +32,12 @@
 from environment import Environment
 from agent import Agent
 from display import Display
-
+from threading import Thread
 
 class Simulation:
 
     def __init__(self):
+        #Thread.__init__(self)
         self.env = Environment()
         self.agent = Agent(self.env)
         self.display = Display()
@@ -47,18 +48,26 @@ class Simulation:
         self.is_running = True
         self.display.start_loop(self.run)
 
-    def run(self):
-
+    def environment_run(self):
         if self.is_running:
             if self.env.should_there_be_a_new_dirty_space():
                 self.env.generate_dirt()
             if self.env.should_there_be_a_new_lost_jewel():
                 self.env.generate_jewel()
-        self.display.window.after(1, self.run)
+        self.display.window.after(1, self.environment_run)
+
+    def agen_run(self):
+        self.agent.run()
+
+    def run(self):
+        Thread(target=self.environment_run).start()
+        Thread(target=self.agen_run).start()
 
 
 
-        self.agent.run()#a mettre ailleur
+
+
+
 
 
 
