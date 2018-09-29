@@ -160,7 +160,7 @@ class Effector:
                 coord[1] = self.dirt[1][i]
             dest[0][0] = coord[0]
             dest[1][0] = coord[1]
-        return destdest;
+        return dest;
 
     def shorter_way(self,dest,node):
         waist = self.node.shape
