@@ -7,8 +7,8 @@ class Environment:
     GRID_WIDTH = 10
     GRID_HEIGHT = 10
 
-    PROBA_DIRTY = 0.5
-    PROBA_JEWEL = 0.25
+    PROBA_DIRTY = 0.9970#0.5
+    PROBA_JEWEL = 0.9975#0.25
 
 
     def __init__(self):
@@ -49,8 +49,11 @@ class Environment:
         return int(random.random()*10), int(random.random()*10)
 
     def generate_dirt(self):
+        pos=self.place_of_new_dirt()
+        self.grid[pos[0]][pos[1]].add_dirt()
 
-        return True
 
     def generate_jewel(self):
-        return True
+        pos = self.place_of_new_jewel()
+        self.grid[pos[0]][pos[1]].add_jewel()
+
