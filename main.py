@@ -40,9 +40,10 @@ class Simulation:
         #Thread.__init__(self)
         self.env = Environment()
         self.agent = Agent(self.env)
-        self.display = Display()
+        self.display = Display(self.agent)
 
-        self.display.add_grid(self.env.get_grid(), "Environment")
+        self.display.add_label("Environment")
+        self.display.add_grid(self.env.get_grid())
         # self.display.add_grid(self.agent.get_grid(), "Agent's mental state")
 
         self.is_running = True
@@ -56,18 +57,18 @@ class Simulation:
                 self.env.generate_jewel()
         self.display.window.after(1, self.environment_run)
 
+        self.display.add_grid(self.env.get_grid())
+        #self.display.window.configure()
+
+
+
+
     def agen_run(self):
         self.agent.run()
 
     def run(self):
         Thread(target=self.environment_run).start()
         Thread(target=self.agen_run).start()
-
-
-
-
-
-
 
 
 
