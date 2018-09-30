@@ -26,8 +26,6 @@ class Display:
     def add_grid(self, grid):
         grid_x, grid_y = self.window.grid_size()
         self.new_canvas.delete(ALL)
-        #self.new_canvas = Canvas(self.window, width=500, height=500, bd=0)
-        print("new cannnvas")
 
         for i in range(len(grid)):
             for j in range(len(grid[0])):
@@ -43,12 +41,10 @@ class Display:
         posAgent=self.agent.get_position()
         xAgent=1+50*posAgent[0]
         yAgent=1+50*posAgent[1]
-        print("poosss chaaaannnnggeee")
         self.new_canvas.create_image(xAgent, yAgent, anchor=NW, image=self.vacuum_photo)
         self.new_canvas.grid(row=1, column=grid_x)
 
     def start_loop(self, method):
-        print("salut")
         self.window.after(1, method)
         self.window.mainloop()
 
