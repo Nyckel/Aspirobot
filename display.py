@@ -1,5 +1,5 @@
 from tkinter import *
-
+from copy import deepcopy
 
 class Display:
 
@@ -46,8 +46,12 @@ class Display:
     def check_for_changes(self):
         while not self.room_changes_q.empty():
             room = self.room_changes_q.get_nowait()
-            print("In display, received mutation ", room.x, room.y)
             self.draw_room(self.canvas_list[0], room)
+
+            # Raise agent to top layer (otherwise it's hidden after redraw)
+            if room.get_position() == room.get_position():
+                for cv in self.canvas_list:
+                    cv.tag_raise(self.agent_image)
 
         while not self.agent_move_q.empty():
             new_pos = self.agent_move_q.get_nowait()
@@ -76,9 +80,12 @@ class Display:
         cv.grid(row=1, column=x_agent - 1)  # We want the grid to be below its label
 
     def move_agent(self, new_pos):
+        x_shift = (1 + self.CELL_SIZE * new_pos[0]) - (1 + self.CELL_SIZE * self.agent_pos[0])
+        y_shift = (1 + self.CELL_SIZE * new_pos[1]) - (1 + self.CELL_SIZE * self.agent_pos[1])
+
         for cv in self.canvas_list:
-            cv.move(self.agent_image, new_pos[0] - self.agent_pos[0], new_pos[1] - self.agent_pos[0])
-        self.agent_pos = new_pos
+            cv.move(self.agent_image, x_shift, y_shift)
+        self.agent_pos = deepcopy(new_pos)
 
     def on_closing(self):
         # TODO: Get event back to main and join all threads

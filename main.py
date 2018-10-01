@@ -33,6 +33,7 @@ from environment import Environment
 from agent import Agent
 from display import Display
 from queue import Queue
+from copy import deepcopy
 
 
 class Simulation:
@@ -44,9 +45,9 @@ class Simulation:
         env_to_agent = Queue()  # for environment to signal its mutations to the agent
         env_to_display = Queue()  # for environment to signal its mutations to the display
 
-        self.env = Environment(agent_to_env, env_to_agent, env_to_display)
         self.agent = Agent(env_to_agent, agent_to_env, agent_to_display)
-        self.display = Display(self.agent.get_position(), env_to_display, agent_to_display)
+        self.env = Environment(deepcopy(self.agent.get_position()), agent_to_env, env_to_agent, env_to_display)
+        self.display = Display(deepcopy(self.agent.get_position()), env_to_display, agent_to_display)
 
         self.display.add_label("Environment")
         self.display.add_grid(self.env.get_grid())

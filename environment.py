@@ -5,6 +5,7 @@ from threading import Thread, Event
 from queue import Queue, Empty
 
 from room import Room
+from agent import Action
 
 
 class Environment(Thread):
@@ -21,8 +22,10 @@ class Environment(Thread):
     PROBA_DIRTY = 0.7  # 0.9970  # 0.5
     PROBA_JEWEL = 0.92  # 0.9975  # 0.25
 
-    def __init__(self, agent_action_q, room_agent_q, room_display_q):
+    def __init__(self, agent_pos, agent_action_q, room_agent_q, room_display_q):
         super(Environment, self).__init__()
+        self.agent_position = agent_pos
+
         self.agent_action_q = agent_action_q  # Input queue where we read robot actions
         self.room_change_agent_q = room_agent_q  # Output queue where we write changes happening in the grid
         self.room_change_display_q = room_display_q  # Output queue where we write changes happening in the grid
@@ -47,9 +50,23 @@ class Environment(Thread):
                 self.generate_jewel()
 
             try:
-                new_agent_action = self.agent_action_q.get(True, 0.05) # TODO: React to agent action
-
-                # self.room_change_q.put((self.name, ))
+                new_agent_action = self.agent_action_q.get_nowait()
+                if new_agent_action == Action.LEFT:
+                    self.agent_position[0] -= 1
+                elif new_agent_action == Action.UP:
+                    self.agent_position[1] -= 1
+                elif new_agent_action == Action.RIGHT:
+                    self.agent_position[0] += 1
+                elif new_agent_action == Action.DOWN:
+                    self.agent_position[1] += 1
+                elif new_agent_action == Action.GET_DIRT:
+                    agent_room = self.grid[self.agent_position[1]][self.agent_position[0]]
+                    if agent_room.has_dirt:
+                        self.remove_dirt(agent_room)
+                elif new_agent_action == Action.GET_JEWEL:
+                    agent_room = self.grid[self.agent_position[1]][self.agent_position[0]]
+                    if agent_room.has_jewel:
+                        self.remove_jewel(agent_room)
             except Empty:
                 continue
 
@@ -79,13 +96,23 @@ class Environment(Thread):
         x, y = self.place_of_new_dirt()
         room = self.grid[y][x]
         room.add_dirt()
-        self.room_change_agent_q.put(room)
-        self.room_change_display_q.put(room)
+        self.notify_room_mutation(room)
 
     def generate_jewel(self):
         x, y = self.place_of_new_jewel()
         room = self.grid[y][x]
         room.add_jewel()
+        self.notify_room_mutation(room)
+
+    def remove_dirt(self, room):
+        room.remove_dirt()
+        self.notify_room_mutation(room)
+
+    def remove_jewel(self, room):
+        room.remove_jewel()
+        self.notify_room_mutation(room)
+
+    def notify_room_mutation(self, room):
+        # TODO: Check if room is in viewing range of agent (for uninformed search)
         self.room_change_agent_q.put(room)
         self.room_change_display_q.put(room)
-

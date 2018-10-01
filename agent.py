@@ -3,9 +3,9 @@ from threading import Thread, Event
 from queue import Queue
 
 from enum import Enum
-from environment import Environment
+# from environment import Environment
 from room import Room
-from captor import Captor
+# from captor import Captor
 
 
 class Action(Enum):
@@ -16,9 +16,6 @@ class Action(Enum):
     GET_JEWEL = 5
     GET_DIRT = 6
     WAIT = 7
-
-    def execute(self):
-        return 0
 
 
 class Agent(Thread):
@@ -32,7 +29,7 @@ class Agent(Thread):
     GRID_WIDTH = 10
     GRID_HEIGHT = 10
 
-    informed=False
+    informed = False
 
     def __init__(self, room_change_q, agent_action_env_q, agent_action_disp_q):
 
@@ -58,6 +55,15 @@ class Agent(Thread):
             Action.WAIT
         ]
 
+        self.move_actions = [
+            Action.UP,
+            Action.RIGHT,
+            Action.DOWN,
+            Action.LEFT
+        ]
+
+        self.actions_planned = Queue()  # List of actions planned for the agent, they will be executed sequentially
+
     def get_position(self):
         return self.position
 
@@ -69,9 +75,8 @@ class Agent(Thread):
 
     def observe_environment_with_sensors(self):
         while not self.room_change_q.empty():
-            x, y, room = self.room_change_q.get_nowait()
-            self.grid[y][x] = room  # TODO: Maybe have a class GridRepresentation with a mutate() method
-            # self.room_change_q.put((self.name, ))
+            room = self.room_change_q.get_nowait()
+            self.grid[room.y][room.x] = room  # TODO: Maybe have a class GridRepresentation with a mutate() method
 
         # Captor.IsThereJewel(self.env,self.position)
         # Captor.IsThereDirt(self.env,self.position)
@@ -80,12 +85,34 @@ class Agent(Thread):
         pass
         # self.grid=Environment.get_grid(self.env)
 
-    def choose_an_action(self):
-        return 0
+    def plan_actions(self):
+        # For testing purpose. TODO: Replace by exploration algorithm
+        for i in range(9):
+            self.actions_planned.put(Action.RIGHT)
+            self.actions_planned.put(Action.GET_DIRT)
+            self.actions_planned.put(Action.GET_JEWEL)
+        for i in range(9):
+            self.actions_planned.put(Action.DOWN)
+            self.actions_planned.put(Action.GET_DIRT)
+            self.actions_planned.put(Action.GET_JEWEL)
 
-    def just_do_it(self):
-        Effector.down(self)  # a changer
-        return 0
+    def execute_next_action(self):
+        """ Action execution simply consists of sending what the agent does to the environment (and the display) """
+        if not self.actions_planned.empty():
+            next_action = self.actions_planned.get_nowait()
+            if next_action == Action.LEFT:
+                self.position[0] -= 1
+            elif next_action == Action.RIGHT:
+                self.position[0] += 1
+            elif next_action == Action.UP:
+                self.position[1] -= 1
+            elif next_action == Action.DOWN:
+                self.position[1] += 1
+
+            print("Agent: Doing action ", next_action, ", pos: ", self.position)
+            if self.is_move_action(next_action):
+                self.agent_action_disp_q.put(self.position)
+            self.agent_action_env_q.put(next_action)
 
     @staticmethod
     def wait():
@@ -93,26 +120,24 @@ class Agent(Thread):
 
     def run(self):
         while not self.stop_request.isSet():
-            print("Agent loop")
             self.observe_environment_with_sensors()
             self.update_state()
-            self.choose_an_action()
-            self.just_do_it()
+            if self.actions_planned.empty():
+                self.plan_actions() # TODO: Learn exploration frequency
+            self.execute_next_action()
             self.wait()
 
     def join(self, timeout=None):
         self.stop_request.set()
         super(Agent, self).join(timeout)
 
-
-
-
-
+    def is_move_action(self, action):
+        return action in self.move_actions
 
 class Effector:
 
     def up(self):
-        position=Agent.get_position(self)
+        position = Agent.get_position(self)
         if (0 <= position[1] - 1 & position[1] - 1 <= 9):
             position[1]=position[1]-1
             Agent.set_position(self,position)
@@ -145,6 +170,7 @@ class Effector:
         position = Agent.get_position(self)
         actual_room=Environment.grid[position[0]][position[1]]
         actual_room.has_jewel=False
+
     def explore_close(self):
         dest = self.dirt
         waist = self.dirt.shape
