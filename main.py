@@ -32,46 +32,32 @@
 from environment import Environment
 from agent import Agent
 from display import Display
-from threading import Thread
+from queue import Queue
+
 
 class Simulation:
 
     def __init__(self):
-        #Thread.__init__(self)
-        self.env = Environment()
-        self.agent = Agent(self.env)
-        self.display = Display(self.agent)
+
+        agent_to_display = Queue()  # For agent to signal its actions to the display
+        agent_to_env = Queue()  # for agent to signal its actions to the environment
+        env_to_agent = Queue()  # for environment to signal its mutations to the agent
+        env_to_display = Queue()  # for environment to signal its mutations to the display
+
+        self.env = Environment(agent_to_env, env_to_agent, env_to_display)
+        self.agent = Agent(env_to_agent, agent_to_env, agent_to_display)
+        self.display = Display(self.agent.get_position(), env_to_display, agent_to_display)
 
         self.display.add_label("Environment")
         self.display.add_grid(self.env.get_grid())
-        # self.display.add_grid(self.agent.get_grid(), "Agent's mental state")
 
-        self.is_running = True
-        self.display.start_loop(self.run)
+        # self.display.add_label("Agent's representation")
+        # self.display.add_grid(self.agent.get_grid())
 
-    def environment_run(self):
-        if self.is_running:
-            if self.env.should_there_be_a_new_dirty_space():
-                self.env.generate_dirt()
-            if self.env.should_there_be_a_new_lost_jewel():
-                self.env.generate_jewel()
-        self.display.window.after(1, self.environment_run)
-
-        self.display.add_grid(self.env.get_grid())
-        #self.display.window.configure()
-
-
-
-
-    def agen_run(self):
-        self.agent.run()
-
-    def run(self):
-        Thread(target=self.environment_run).start()
-        Thread(target=self.agen_run).start()
-
+        self.env.start()
+        self.agent.start()
+        self.display.start_loop()  # (blocking method)
 
 
 if __name__ == '__main__':
     Simulation()
-

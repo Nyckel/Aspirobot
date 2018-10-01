@@ -1,4 +1,6 @@
 from environment import Environment
+
+
 class Captor:
 
     def IsThereJewel(self,pos):

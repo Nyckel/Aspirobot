@@ -1,6 +1,10 @@
 import time
+from threading import Thread, Event
+from queue import Queue
+
 from enum import Enum
 from environment import Environment
+from room import Room
 from captor import Captor
 
 
@@ -17,20 +21,31 @@ class Action(Enum):
         return 0
 
 
-class Agent:
+class Agent(Thread):
+    """ A thread managing lifecycle of the agent.
+        It uses its representation of the world, its goal
+        and its exploration algorithm to plan for its next actions.
+
+        It receives room changes by reading in a Queue
+        It sends its actions by writing them in a Queue
+    """
     GRID_WIDTH = 10
     GRID_HEIGHT = 10
 
     informed=False
 
-    def __init__(self, env):
+    def __init__(self, room_change_q, agent_action_env_q, agent_action_disp_q):
 
-        self.env=env
+        super(Agent, self).__init__()
+        self.room_change_q = room_change_q  # Input queue where we read changes happening in the grid (seen by sensors)
+        self.agent_action_env_q = agent_action_env_q  # Output queue where we write robot actions
+        self.agent_action_disp_q = agent_action_disp_q  # Output queue where we write robot actions
+        self.stop_request = Event()
 
         # States
         self.dirt = []
         self.position = [0,0]
-        self.gridRobot = [[None for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
+        self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
 
         # Actions
         self.actions_possibles = [
@@ -46,25 +61,30 @@ class Agent:
     def get_position(self):
         return self.position
 
-    def get_gridRobot(self):
-        return self.gridRobot
+    def get_grid(self):
+        return self.grid
 
     def set_position(self,pos):
         self.position=pos
 
+    def observe_environment_with_sensors(self):
+        while not self.room_change_q.empty():
+            x, y, room = self.room_change_q.get_nowait()
+            self.grid[y][x] = room  # TODO: Maybe have a class GridRepresentation with a mutate() method
+            # self.room_change_q.put((self.name, ))
 
-    def ObeserveEnvironmentWithAllMySensors(self):
-        Captor.IsThereJewel(self.env,self.position)
-        Captor.IsThereDirt(self.env,self.position)
+        # Captor.IsThereJewel(self.env,self.position)
+        # Captor.IsThereDirt(self.env,self.position)
 
-    def UpdateMyState(self):
-        self.gridRobot=Environment.get_grid(self.env)
+    def update_state(self):
+        pass
+        # self.grid=Environment.get_grid(self.env)
 
-    def ChooseAnAction(self):
+    def choose_an_action(self):
         return 0
 
-    def justDoIt(self):
-        Effector.Down(self) #a changer
+    def just_do_it(self):
+        Effector.down(self)  # a changer
         return 0
 
     @staticmethod
@@ -72,14 +92,17 @@ class Agent:
         time.sleep(1)
 
     def run(self):
-        while(True):
-            self.ObeserveEnvironmentWithAllMySensors()
-            self.UpdateMyState()
-            self.ChooseAnAction()
-            self.justDoIt()
+        while not self.stop_request.isSet():
+            print("Agent loop")
+            self.observe_environment_with_sensors()
+            self.update_state()
+            self.choose_an_action()
+            self.just_do_it()
             self.wait()
 
-
+    def join(self, timeout=None):
+        self.stop_request.set()
+        super(Agent, self).join(timeout)
 
 
 
@@ -87,37 +110,38 @@ class Agent:
 
 
 class Effector:
-    def Up(self):
+
+    def up(self):
         position=Agent.get_position(self)
         if (0 <= position[1] - 1 & position[1] - 1 <= 9):
             position[1]=position[1]-1
             Agent.set_position(self,position)
 
-    def Down(self):
+    def down(self):
         position = Agent.get_position(self)
         if(0<=position[1]+1 & position[1]+1<=9):
             position[1]=position[1]+1
             Agent.set_position(self,position)
 
-    def Left(self):
+    def left(self):
         position = Agent.get_position(self)
         if (0 <= position[0] - 1 & position[0] - 1 <= 9):
             position[0] =position[0] - 1
             Agent.set_position(self,position)
 
-    def Right(self):
+    def right(self):
         position = Agent.get_position(self)
         if (0 <= position[0] + 1 & position[0] + 1 <= 9):
             position[0]=position[0]+1
             Agent.set_position(self,position)
 
-    def Get_dirt(self):
+    def get_dirt(self):
         position = Agent.get_position(self)
         actual_room=Environment.grid[position[0]][position[1]]
         actual_room.has_dirt=False
         actual_room.has_jewel=False
 
-    def Get_jewel(self):
+    def get_jewel(self):
         position = Agent.get_position(self)
         actual_room=Environment.grid[position[0]][position[1]]
         actual_room.has_jewel=False
