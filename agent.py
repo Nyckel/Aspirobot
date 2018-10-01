@@ -172,58 +172,69 @@ class Effector:
         actual_room.has_jewel=False
 
     def explore_close(self):
-        dest = self.dirt
         waist = self.dirt.shape
-        min = abs(self.dirt[0][0] - self.position[0][0] + self.dirt[1][0] - self.position[1][0])
-        coord = self.dirt[0]
-        for i in range(1, waist[1]):
-            dest[0][i] = -1
-            dest[1][i] = -1
-            test = abs(self.dirt[0][i] - self.position[0][i] + self.dirt[1][i] - self.position[1][i])
+        min = abs(self.dirt[0][0] - self.position[0][0] + self.dirt[0][1] - self.position[0][1])
+        coord = []
+        for i in range(1, waist[0]):
+            test = abs(self.dirt[i][0] - self.position[i][0] + self.dirt[i][1] - self.position[i][1])
             if test < min :
                 min = test
-                coord[0]=self.dirt[0][i]
-                coord[1] = self.dirt[1][i]
+                coord[0]=self.dirt[i][0]
+                coord[1] = self.dirt[i][1]
 
         if min < 10 :
-             dest[0][0] = coord[0]
-             dest[1][0] = coord[1]
-             return dest;
-
-        return dest;
+            return coord;
+        else :
+            return 0;
 
     def explore_by_area(self):
-        dest = self.dirt
+        dest =[]
+        node = []
         waist = self.dirt.shape
-        coord = self.dirt[0]
-        min = abs(self.dirt[0][0] - self.position[0][0] + self.dirt[1][0] - self.position[1][0])
-        for j in range(0, waist[1]):
-            min = min + abs(self.dirt[0][0] - self.dirt[0][0] + self.dirt[1][0] - self.dirt[1][0])
+        coord = []
+        min = abs(self.dirt[0][0] - self.position[0][0] + self.dirt[0][1] - self.position[0][1])
+        for j in range(0, waist[0]):
+            min = min + abs(self.dirt[0][0] - self.dirt[0][0] + self.dirt[0][1] - self.dirt[0][1])
 
-        for i in range(1, waist[1]):
-            test = abs(self.dirt[0][i] - self.position[0][i] + self.dirt[1][i] - self.position[1][i])
-            for j in range(0,waist[1]):
-                test = test + abs(self.dirt[0][i] - self.dirt[0][j] + self.dirt[1][i] - self.dirt[1][j])
+        for i in range(1, waist[0]):
+            test = abs(self.dirt[i][0] - self.position[i][0] + self.dirt[i][1] - self.position[i][1])
+            for j in range(0,waist[0]):
+                test = test + abs(self.dirt[i][0] - self.dirt[j][0] + self.dirt[i][1] - self.dirt[j][1])
             if test < min:
+                node.append(coord)
                 min = test
-                coord[0] = self.dirt[0][i]
-                coord[1] = self.dirt[1][i]
+                coord[0] = self.dirt[i][0]
+                coord[1] = self.dirt[i][1]
+            else:
+                node.append([self.dirt[i][0],self.dirt[i][1]])
             dest[0][0] = coord[0]
-            dest[1][0] = coord[1]
+            dest[0][1] = coord[1]
         return dest;
 
-    def shorter_way(self,dest,node):
+    def shorter_way(self,dest):
+        node = self.dirt
+        node.remove([dest[0][0],dest[0][1]])
         waist = self.node.shape
-        coord = [-1,-1]
-        lastcoord  = [dest[0][0],dest[1][0]]
-        min = abs(self.node[0][0] - lastcoord[0] + self.node[1][0] - lastcoord[1])
-        for i in range(1, waist[1]):
-            test = abs(self.node[0][i] - lastcoord[0] + self.node[1][i] - lastcoord[1])
+        coord = []
+        lastcoord  = [dest[0][0],dest[0][1]]
+        min = abs(self.node[0][0] - lastcoord[0] + self.node[0][1] - lastcoord[1])
+        for i in range(1, waist[0]):
+            test = abs(self.node[i][0] - lastcoord[0] + self.node[i][1] - lastcoord[1])
             if test < min:
                 min = test
-                coord[0] = self.node[0][i]
-                coord[1] = self.node[1][i]
+                coord[0] = self.node[i][0]
+                coord[1] = self.node[i][1]
         node.remove(coord)
         dest.add(coord)
         lastcoord == coord
         return dest;
+
+    def explore(self):
+        dest = [];
+        dest = Agent.explore_close()
+        if(dest != 0):
+            return dest;
+        else :
+           dest = Agent.explore_by_area()
+           dest = Agent.shorter_way(dest)
+           return dest;
