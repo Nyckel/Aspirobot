@@ -52,13 +52,17 @@ class Environment(Thread):
             try:
                 new_agent_action = self.agent_action_q.get_nowait()
                 if new_agent_action == Action.LEFT:
-                    self.agent_position[0] -= 1
+                    if (self.agent_position[0] >= 1) :
+                        self.agent_position[0] -= 1
                 elif new_agent_action == Action.UP:
-                    self.agent_position[1] -= 1
+                    if (self.agent_position[1] >= 1):
+                        self.agent_position[1] -= 1
                 elif new_agent_action == Action.RIGHT:
-                    self.agent_position[0] += 1
+                    if (self.agent_position[0] <=8 ):
+                        self.agent_position[0] += 1
                 elif new_agent_action == Action.DOWN:
-                    self.agent_position[1] += 1
+                    if (self.agent_position[1] <= 8):
+                        self.agent_position[1] += 1
                 elif new_agent_action == Action.GET_DIRT:
                     agent_room = self.grid[self.agent_position[1]][self.agent_position[0]]
                     if agent_room.has_dirt:
