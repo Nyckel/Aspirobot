@@ -77,9 +77,12 @@ class Agent(Thread):
         while not self.room_change_q.empty():
             room = self.room_change_q.get_nowait()
             self.grid[room.y][room.x] = room  # TODO: Maybe have a class GridRepresentation with a mutate() method
+            if room.has_dirt or room.has_jewel :
+                     self.dirt.append(room)
 
         # Captor.IsThereJewel(self.env,self.position)
         # Captor.IsThereDirt(self.env,self.position)
+
 
     def update_state(self):
         pass
@@ -134,45 +137,8 @@ class Agent(Thread):
     def is_move_action(self, action):
         return action in self.move_actions
 
-class Effector:
-
-    def up(self):
-        position = Agent.get_position(self)
-        if (0 <= position[1] - 1 & position[1] - 1 <= 9):
-            position[1]=position[1]-1
-            Agent.set_position(self,position)
-
-    def down(self):
-        position = Agent.get_position(self)
-        if(0<=position[1]+1 & position[1]+1<=9):
-            position[1]=position[1]+1
-            Agent.set_position(self,position)
-
-    def left(self):
-        position = Agent.get_position(self)
-        if (0 <= position[0] - 1 & position[0] - 1 <= 9):
-            position[0] =position[0] - 1
-            Agent.set_position(self,position)
-
-    def right(self):
-        position = Agent.get_position(self)
-        if (0 <= position[0] + 1 & position[0] + 1 <= 9):
-            position[0]=position[0]+1
-            Agent.set_position(self,position)
-
-    def get_dirt(self):
-        position = Agent.get_position(self)
-        actual_room=Environment.grid[position[0]][position[1]]
-        actual_room.has_dirt=False
-        actual_room.has_jewel=False
-
-    def get_jewel(self):
-        position = Agent.get_position(self)
-        actual_room=Environment.grid[position[0]][position[1]]
-        actual_room.has_jewel=False
-
     def explore_close(self):
-        waist = self.dirt.shape
+        waist = len(self.dirt)
         min = abs(self.dirt[0][0] - self.position[0][0] + self.dirt[0][1] - self.position[0][1])
         coord = []
         for i in range(1, waist[0]):
@@ -231,10 +197,48 @@ class Effector:
 
     def explore(self):
         dest = [];
-        dest = Agent.explore_close()
+        dest = Agent.explore_close(self)
         if(dest != 0):
             return dest;
         else :
-           dest = Agent.explore_by_area()
-           dest = Agent.shorter_way(dest)
+           dest = Agent.explore_by_area(self)
+           dest = Agent.shorter_way(self,dest)
            return dest;
+
+class Effector:
+
+    def up(self):
+        position = Agent.get_position(self)
+        if (0 <= position[1] - 1 & position[1] - 1 <= 9):
+            position[1]=position[1]-1
+            Agent.set_position(self,position)
+
+    def down(self):
+        position = Agent.get_position(self)
+        if(0<=position[1]+1 & position[1]+1<=9):
+            position[1]=position[1]+1
+            Agent.set_position(self,position)
+
+    def left(self):
+        position = Agent.get_position(self)
+        if (0 <= position[0] - 1 & position[0] - 1 <= 9):
+            position[0] =position[0] - 1
+            Agent.set_position(self,position)
+
+    def right(self):
+        position = Agent.get_position(self)
+        if (0 <= position[0] + 1 & position[0] + 1 <= 9):
+            position[0]=position[0]+1
+            Agent.set_position(self,position)
+
+    def get_dirt(self):
+        position = Agent.get_position(self)
+        actual_room = Environment.grid[position[0]][position[1]]
+        actual_room.has_dirt=False
+        actual_room.has_jewel=False
+
+    def get_jewel(self):
+        position = Agent.get_position(self)
+        actual_room = Environment.grid[position[0]][position[1]]
+        actual_room.has_jewel=False
+
