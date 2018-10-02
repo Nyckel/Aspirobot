@@ -10,6 +10,12 @@ class Room:
     def get_position(self):
         return self.x, self.y
 
+    def get_position_x(self):
+        return self.x
+
+    def get_position_y(self):
+        return self.y
+
     def add_dirt(self):
         self.has_dirt = True
 

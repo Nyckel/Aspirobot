@@ -43,7 +43,7 @@ class Agent(Thread):
         self.dirt = []
         self.position = [0,0]
         self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
-
+        self.dest = []
         # Actions
         self.actions_possibles = [
             Action.UP,
@@ -77,8 +77,8 @@ class Agent(Thread):
         while not self.room_change_q.empty():
             room = self.room_change_q.get_nowait()
             self.grid[room.y][room.x] = room  # TODO: Maybe have a class GridRepresentation with a mutate() method
-            if room.has_dirt or room.has_jewel :
-                     self.dirt.append(room)
+            if room.has_dirt :
+                     self.dirt.append([room.get_position_x(),room.get_position_y()])
 
         # Captor.IsThereJewel(self.env,self.position)
         # Captor.IsThereDirt(self.env,self.position)
@@ -125,10 +125,14 @@ class Agent(Thread):
         while not self.stop_request.isSet():
             self.observe_environment_with_sensors()
             self.update_state()
+            print(self.dest)
             if self.actions_planned.empty():
                 self.plan_actions() # TODO: Learn exploration frequency
             self.execute_next_action()
             self.wait()
+            self.explore();
+            print(self.dest)
+
 
     def join(self, timeout=None):
         self.stop_request.set()
@@ -138,68 +142,75 @@ class Agent(Thread):
         return action in self.move_actions
 
     def explore_close(self):
+        if not self.dirt :
+            return self.position
         waist = len(self.dirt)
-        min = abs(self.dirt[0][0] - self.position[0][0] + self.dirt[0][1] - self.position[0][1])
+        coorddirt = self.dirt[0]
+        min = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
         coord = []
-        for i in range(1, waist[0]):
-            test = abs(self.dirt[i][0] - self.position[i][0] + self.dirt[i][1] - self.position[i][1])
+
+        for i in range(1, waist):
+            coorddirt = self.dirt[i]
+            test = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
             if test < min :
                 min = test
-                coord[0]=self.dirt[i][0]
-                coord[1] = self.dirt[i][1]
-
+                coord = coorddirt
         if min < 10 :
             return coord;
         else :
             return 0;
 
     def explore_by_area(self):
-        dest =[]
         node = []
-        waist = self.dirt.shape
+        waist = len(self.dirt)
         coord = []
-        min = abs(self.dirt[0][0] - self.position[0][0] + self.dirt[0][1] - self.position[0][1])
-        for j in range(0, waist[0]):
-            min = min + abs(self.dirt[0][0] - self.dirt[0][0] + self.dirt[0][1] - self.dirt[0][1])
+        coorddirt = self.dirt[0]
+        coorddirtsecond = self.dirt[0]
 
-        for i in range(1, waist[0]):
-            test = abs(self.dirt[i][0] - self.position[i][0] + self.dirt[i][1] - self.position[i][1])
-            for j in range(0,waist[0]):
-                test = test + abs(self.dirt[i][0] - self.dirt[j][0] + self.dirt[i][1] - self.dirt[j][1])
+
+        min = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
+        for j in range(0, waist):
+            coorddirtsecond = self.dirt[j]
+            min = min + abs(coorddirt[0] - coorddirtsecond[0] + coorddirt[1] - coorddirtsecond[1])
+
+        for i in range(1, waist):
+            coorddirt = self.dirt[i]
+            test = abs(self.dirt[i][0] - self.position[0] + self.dirt[i][1] - self.position[1])
+            for j in range(0,waist):
+                test = test + abs(coorddirt[0] - coorddirtsecond[0] + coorddirt[1] - coorddirtsecond[1])
             if test < min:
                 node.append(coord)
                 min = test
-                coord[0] = self.dirt[i][0]
-                coord[1] = self.dirt[i][1]
-            else:
-                node.append([self.dirt[i][0],self.dirt[i][1]])
-            dest[0][0] = coord[0]
-            dest[0][1] = coord[1]
-        return dest;
+                coord = coorddirt
+            else :
+                node.append(coorddirt)
+            self.dest.append(coord)
+        return self.dest;
 
     def shorter_way(self,dest):
         node = self.dirt
-        node.remove([dest[0][0],dest[0][1]])
-        waist = self.node.shape
+        node.remove(dest[0])
+        waist = len(node)
         coord = []
-        lastcoord  = [dest[0][0],dest[0][1]]
-        min = abs(self.node[0][0] - lastcoord[0] + self.node[0][1] - lastcoord[1])
-        for i in range(1, waist[0]):
-            test = abs(self.node[i][0] - lastcoord[0] + self.node[i][1] - lastcoord[1])
+        lastcoord  = dest[0]
+        coordnode = node[0]
+        min = abs(coordnode[0] - lastcoord[0] + coordnode[1] - lastcoord[1])
+        for i in range(1, waist):
+            test = abs(coordnode[0] - lastcoord[0] + coordnode[1] - lastcoord[1])
             if test < min:
                 min = test
-                coord[0] = self.node[i][0]
-                coord[1] = self.node[i][1]
+                coord = self.node[i]
         node.remove(coord)
         dest.add(coord)
         lastcoord == coord
         return dest;
 
     def explore(self):
-        dest = [];
         dest = Agent.explore_close(self)
         if(dest != 0):
             return dest;
+        elif dest == self.position :
+            return self.position
         else :
            dest = Agent.explore_by_area(self)
            dest = Agent.shorter_way(self,dest)
