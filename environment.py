@@ -34,12 +34,10 @@ class Environment(Thread):
         self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
 
         for i in range(10):  # TODO: Replace to have a random number of dirt (in a range...) ?
-            x, y = self.place_of_new_dirt()
-            self.grid[y][x].add_dirt()
+            self.generate_dirt()
 
         for i in range(2):
-            x, y = self.place_of_new_jewel()
-            self.grid[y][x].add_jewel()
+            self.generate_jewel()
 
     def run(self):
         while not self.stop_request.isSet():
@@ -97,14 +95,26 @@ class Environment(Thread):
         return int(random.random()*10), int(random.random()*10)
 
     def generate_dirt(self):
-        x, y = self.place_of_new_dirt()
-        room = self.grid[y][x]
+        room_ok = False
+        room = None
+        while not room_ok:
+            x, y = self.place_of_new_dirt()
+            room = self.grid[y][x]
+            if not room.has_dirt:
+                room_ok = True
+
         room.add_dirt()
         self.notify_room_mutation(room)
 
     def generate_jewel(self):
-        x, y = self.place_of_new_jewel()
-        room = self.grid[y][x]
+        room_ok = False
+        room = None
+        while not room_ok:
+            x, y = self.place_of_new_jewel()
+            room = self.grid[y][x]
+            if not room.has_jewel:
+                room_ok = True
+
         room.add_jewel()
         self.notify_room_mutation(room)
 
