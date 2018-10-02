@@ -1,11 +1,10 @@
 import time
 from threading import Thread, Event
 from queue import Queue
+from heapq import heappop, heappush
 
 from enum import Enum
-# from environment import Environment
 from room import Room
-# from captor import Captor
 
 
 class Action(Enum):
@@ -168,7 +167,6 @@ class Agent(Thread):
         coorddirt = self.dirt[0]
         coorddirtsecond = self.dirt[0]
 
-
         min = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
         for j in self.dirt:
             coorddirtsecond = j
@@ -196,7 +194,7 @@ class Agent(Thread):
         node.remove(tamp)
         waist = len(node)
         coord = []
-        lastcoord  = self.dest[0]
+        lastcoord = self.dest[0]
         coordnode = node[0]
         min = abs(coordnode[0] - lastcoord[0] + coordnode[1] - lastcoord[1])
         for i in node:
@@ -220,6 +218,18 @@ class Agent(Thread):
            self.dest = Agent.explore_by_area(self)
            self.dest = Agent.shorter_way(self)
            return 0;
+
+    # def a_star_search(self):
+    #     frontier = []  # Initialize with start context
+    #     explored = []
+    #     while not len(frontier) == 0:
+    #         state = heappop(frontier)
+    #         explored.append(state)
+    #         if self.goal_test(state):
+
+
+    def goal_test(self, state):
+        return len(state.dirt) == 0
 
 class Effector:
 
