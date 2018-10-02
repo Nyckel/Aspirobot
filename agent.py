@@ -144,21 +144,22 @@ class Agent(Thread):
     def explore_close(self):
         if not self.dirt :
             return self.position
-        waist = len(self.dirt)
-        coorddirt = self.dirt[0]
-        min = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
-        coord = []
-
-        for i in range(1, waist):
-            coorddirt = self.dirt[i]
-            test = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
-            if test < min :
-                min = test
-                coord = coorddirt
-        if min < 10 :
-            return coord;
         else :
-            return 0;
+            waist = len(self.dirt)
+            coorddirt = self.dirt[0]
+            min = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
+            coord = []
+
+            for i in range(1, waist):
+                coorddirt = self.dirt[i]
+                test = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
+                if test < min :
+                    min = test
+                    coord = coorddirt
+            if min < 10 :
+                return coord;
+            else :
+                return 0;
 
     def explore_by_area(self):
         node = []
@@ -187,12 +188,12 @@ class Agent(Thread):
             self.dest.append(coord)
         return self.dest;
 
-    def shorter_way(self,dest):
+    def shorter_way(self):
         node = self.dirt
-        node.remove(dest[0])
+        node.remove(self.dest[0])
         waist = len(node)
         coord = []
-        lastcoord  = dest[0]
+        lastcoord  = self.dest[0]
         coordnode = node[0]
         min = abs(coordnode[0] - lastcoord[0] + coordnode[1] - lastcoord[1])
         for i in range(1, waist):
@@ -201,20 +202,20 @@ class Agent(Thread):
                 min = test
                 coord = self.node[i]
         node.remove(coord)
-        dest.add(coord)
+        self.dest.add(coord)
         lastcoord == coord
-        return dest;
+        return self.dest;
 
     def explore(self):
-        dest = Agent.explore_close(self)
-        if(dest != 0):
-            return dest;
-        elif dest == self.position :
+        coord = Agent.explore_close(self)
+        if(coord != 0):
+            return self.dest;
+        elif coord == self.position :
             return self.position
         else :
-           dest = Agent.explore_by_area(self)
-           dest = Agent.shorter_way(self,dest)
-           return dest;
+           self.dest = Agent.explore_by_area(self)
+           self.dest = Agent.shorter_way(self)
+           return self.dest;
 
 class Effector:
 
