@@ -67,6 +67,9 @@ class Agent(Thread):
     def get_position(self):
         return self.position
 
+    def get_dest(self):
+        return self.dest
+
     def get_grid(self):
         return self.grid
 
@@ -78,11 +81,10 @@ class Agent(Thread):
             room = self.room_change_q.get_nowait()
             self.grid[room.y][room.x] = room  # TODO: Maybe have a class GridRepresentation with a mutate() method
             if room.has_dirt :
-                     self.dirt.append([room.get_position_x(),room.get_position_y()])
+                self.dirt.append([room.get_position_x(),room.get_position_y()])
 
         # Captor.IsThereJewel(self.env,self.position)
         # Captor.IsThereDirt(self.env,self.position)
-
 
     def update_state(self):
         pass
@@ -125,14 +127,11 @@ class Agent(Thread):
         while not self.stop_request.isSet():
             self.observe_environment_with_sensors()
             self.update_state()
-            print(self.dest)
             if self.actions_planned.empty():
                 self.plan_actions() # TODO: Learn exploration frequency
             self.execute_next_action()
             self.wait()
-            self.explore();
-            print(self.dest)
-
+     
 
     def join(self, timeout=None):
         self.stop_request.set()
@@ -150,12 +149,13 @@ class Agent(Thread):
             min = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
             coord = []
 
-            for i in range(1, waist):
-                coorddirt = self.dirt[i]
+            for i in self.dirt:
+                coorddirt = i
                 test = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
                 if test < min :
                     min = test
-                    coord = coorddirt
+                    coord[:] = []
+                    coord.append(coorddirt)
             if min < 10 :
                 return coord;
             else :
@@ -170,14 +170,15 @@ class Agent(Thread):
 
 
         min = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
-        for j in range(0, waist):
-            coorddirtsecond = self.dirt[j]
+        for j in self.dirt:
+            coorddirtsecond = j
             min = min + abs(coorddirt[0] - coorddirtsecond[0] + coorddirt[1] - coorddirtsecond[1])
 
-        for i in range(1, waist):
-            coorddirt = self.dirt[i]
-            test = abs(self.dirt[i][0] - self.position[0] + self.dirt[i][1] - self.position[1])
-            for j in range(0,waist):
+        for i in self.dirt:
+            coorddirt = i
+            test = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
+            for j in self.dirt:
+                coorddirtsecond = j
                 test = test + abs(coorddirt[0] - coorddirtsecond[0] + coorddirt[1] - coorddirtsecond[1])
             if test < min:
                 node.append(coord)
@@ -186,17 +187,20 @@ class Agent(Thread):
             else :
                 node.append(coorddirt)
             self.dest.append(coord)
-        return self.dest;
+        return coord;
 
     def shorter_way(self):
         node = self.dirt
-        node.remove(self.dest[0])
+        self.explore_by_area()
+        tamp = self.get_dest()
+        node.remove(tamp)
         waist = len(node)
         coord = []
         lastcoord  = self.dest[0]
         coordnode = node[0]
         min = abs(coordnode[0] - lastcoord[0] + coordnode[1] - lastcoord[1])
-        for i in range(1, waist):
+        for i in node:
+            coordnode = i
             test = abs(coordnode[0] - lastcoord[0] + coordnode[1] - lastcoord[1])
             if test < min:
                 min = test
@@ -204,42 +208,42 @@ class Agent(Thread):
         node.remove(coord)
         self.dest.add(coord)
         lastcoord == coord
-        return self.dest;
+        return 0;
 
     def explore(self):
         coord = Agent.explore_close(self)
         if(coord != 0):
-            return self.dest;
+            return 0;
         elif coord == self.position :
             return self.position
         else :
            self.dest = Agent.explore_by_area(self)
            self.dest = Agent.shorter_way(self)
-           return self.dest;
+           return 0;
 
 class Effector:
 
     def up(self):
         position = Agent.get_position(self)
-        if (0 <= position[1] - 1 & position[1] - 1 <= 9):
+        if 0 <= position[1] - 1 & position[1] - 1 <= 9:
             position[1]=position[1]-1
             Agent.set_position(self,position)
 
     def down(self):
         position = Agent.get_position(self)
-        if(0<=position[1]+1 & position[1]+1<=9):
+        if 0<=position[1]+1 & position[1]+1<=9:
             position[1]=position[1]+1
             Agent.set_position(self,position)
 
     def left(self):
         position = Agent.get_position(self)
-        if (0 <= position[0] - 1 & position[0] - 1 <= 9):
+        if 0 <= position[0] - 1 & position[0] - 1 <= 9:
             position[0] =position[0] - 1
             Agent.set_position(self,position)
 
     def right(self):
         position = Agent.get_position(self)
-        if (0 <= position[0] + 1 & position[0] + 1 <= 9):
+        if 0 <= position[0] + 1 & position[0] + 1 <= 9:
             position[0]=position[0]+1
             Agent.set_position(self,position)
 
