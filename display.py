@@ -1,6 +1,7 @@
 from tkinter import *
 from copy import deepcopy
 
+
 class Display:
 
     CELL_SIZE = 50
@@ -15,13 +16,14 @@ class Display:
         self.window.title("Aspirobot")
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.canvas_list = []
+        self.arrow_list = []
 
         self.vacuum_photo = PhotoImage(file="img/vacuum.gif")
         self.dirt_photo = PhotoImage(file="img/dirt.gif")
         self.jewel_photo = PhotoImage(file="img/jewel.gif")
         self.agent_image = None
 
-    def add_label(self,label):
+    def add_label(self, label):
         grid_x, grid_y = self.window.grid_size()
 
         tk_label = Label(self.window, text=label)
@@ -52,10 +54,15 @@ class Display:
             if room.get_position() == room.get_position():
                 for cv in self.canvas_list:
                     cv.tag_raise(self.agent_image)
+                    for arrow in self.arrow_list:
+                        cv.tag_raise(arrow)
 
         while not self.agent_move_q.empty():
             new_pos = self.agent_move_q.get_nowait()
-            self.move_agent(new_pos)
+            if len(new_pos) == 2:
+                self.move_agent(new_pos)
+            else:
+                self.draw_trajectory(new_pos)
         self.window.after(1, self.check_for_changes)
 
     def draw_room(self, cv, room):
@@ -86,6 +93,25 @@ class Display:
         for cv in self.canvas_list:
             cv.move(self.agent_image, x_shift, y_shift)
         self.agent_pos = deepcopy(new_pos)
+
+    def draw_trajectory(self, pos_list):
+        for cv in self.canvas_list:
+            for line in self.arrow_list:
+                cv.delete(line)
+        self.arrow_list = []
+        line_extremities = list()
+        line_extremities.append(pos_list[0])
+        pos_list = pos_list[1:]
+        while len(pos_list) > 0:
+            line_extremities.append(pos_list.pop(0))
+            p1 = line_extremities[0].get_position()
+            p2 = line_extremities[1].get_position()
+            for cv in self.canvas_list:
+                new = cv.create_line(p1[0] * self.CELL_SIZE + self.CELL_SIZE/2, p1[1] * self.CELL_SIZE + self.CELL_SIZE/2,
+                               p2[0] * self.CELL_SIZE + self.CELL_SIZE/2, p2[1] * self.CELL_SIZE + self.CELL_SIZE/2
+                               , fill="red", arrow=LAST)
+                self.arrow_list.append(new)
+            line_extremities.pop(0)
 
     def on_closing(self):
         # TODO: Get event back to main and join all threads

@@ -19,8 +19,8 @@ class Environment(Thread):
     GRID_WIDTH = 10
     GRID_HEIGHT = 10
 
-    PROBA_DIRTY = 0.7  # 0.9970  # 0.5
-    PROBA_JEWEL = 0.92  # 0.9975  # 0.25
+    PROBA_DIRTY = 0.80  # 0.9970  # 0.5
+    PROBA_JEWEL = 0.97  # 0.9975  # 0.25
 
     def __init__(self, agent_pos, agent_action_q, room_agent_q, room_display_q):
         super(Environment, self).__init__()
