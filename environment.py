@@ -19,8 +19,8 @@ class Environment(Thread):
     GRID_WIDTH = 10
     GRID_HEIGHT = 10
 
-    PROBA_DIRTY = 0.7  # 0.9970  # 0.5
-    PROBA_JEWEL = 0.92  # 0.9975  # 0.25
+    PROBA_DIRTY = 0.80  # 0.9970  # 0.5
+    PROBA_JEWEL = 0.97  # 0.9975  # 0.25
 
     def __init__(self, agent_pos, agent_action_q, room_agent_q, room_display_q):
         super(Environment, self).__init__()
@@ -42,10 +42,10 @@ class Environment(Thread):
     def run(self):
         while not self.stop_request.isSet():
             time.sleep(1)
-            # if self.should_there_be_a_new_dirty_space():
-            #     self.generate_dirt()
-            # if self.should_there_be_a_new_lost_jewel():
-            #     self.generate_jewel()
+            if self.should_there_be_a_new_dirty_space():
+                self.generate_dirt()
+            if self.should_there_be_a_new_lost_jewel():
+                self.generate_jewel()
 
             try:
                 new_agent_action = self.agent_action_q.get_nowait()
