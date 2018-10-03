@@ -283,22 +283,22 @@ class Agent(Thread):
         return 0;
 
     #exploration non informer
-    """
     def depth_limited_search(self,limit):
-        state_init=0
-        self.recursive_dls(state_init,limit)
+        dirt=self.dirt
+        start_room = self.grid[self.position[1]][self.position[0]]
+        start_node = Node(start_room, self.interesting_rooms.copy())
+        self.recursive_dls(start_node,dirt,limit,0)
 
-    def recursive_dls(self,pos,dirt , limit):
-        depth=10
-        cutoff_occured=False
-        if dirt :
-            print("sol trouvé")
-            return pos
+    def recursive_dls(self,node ,dirt, limit,depth):
+        sol_found=False
+        if node.is_goal() :
+            return node
         elif (depth == limit): #profondeur a laquel on est actuellement
-            return 0
-        elif 1 :
-            result= self.recursive_dls(pos, dirt, limit)
-            return result
+            return 0, sol_found
+        else :
+            for child_node in node.get_children() :
+                result, = self.recursive_dls(child_node, dirt, limit,depth+1)
+                return result, sol_found
             #if result == cutoff :
              #   cutoff_occured= True
             #else :
@@ -306,24 +306,12 @@ class Agent(Thread):
         #if cutoff_occured :
         #   return cutoff
 
-
-    def get_next_node(self,pos):
-        node_liste=[]
-
-
     def iterative_deep_search(self):
         dirt=self.dirt
         for depth in range (0,99):
-            result=self.depth_limited_search(dirt,depth)
-            if result != cutoff:
+            result , sol_found=self.depth_limited_search(dirt,depth)
+            if sol_found:
                 return result
-    """
-
-
-
-
-
-
 
 
 
