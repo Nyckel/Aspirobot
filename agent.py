@@ -43,6 +43,7 @@ class Agent(Thread):
         # States
         self.dirt = []
         self.interesting_rooms = []
+        self.nodes_to_visit = []
         self.position = [0, 0]
         self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
         self.dest = []
@@ -97,24 +98,25 @@ class Agent(Thread):
         # self.grid=Environment.get_grid(self.env)
 
     def plan_actions(self):
-        # self.explore_a_star()
+        self.explore_a_star()
         # For testing purpose. TODO: Replace by exploration algorithm
-        for i in range(9):
-            self.actions_planned.put(Action.RIGHT)
-            self.actions_planned.put(Action.GET_DIRT)
-            self.actions_planned.put(Action.GET_JEWEL)
-        for i in range(9):
-            self.actions_planned.put(Action.DOWN)
-            self.actions_planned.put(Action.GET_DIRT)
-            self.actions_planned.put(Action.GET_JEWEL)
+        # for i in range(9):
+        #     self.actions_planned.put(Action.RIGHT)
+        #     self.actions_planned.put(Action.GET_DIRT)
+        #     self.actions_planned.put(Action.GET_JEWEL)
+        # for i in range(9):
+        #     self.actions_planned.put(Action.DOWN)
+        #     self.actions_planned.put(Action.GET_DIRT)
+        #     self.actions_planned.put(Action.GET_JEWEL)
 
     def explore_a_star(self):
+        # print("Explore A*")
         best_action_suite = []
 
         start_node = Node(self.position, self.interesting_rooms.copy())
 
         frontier = []
-        heappush(frontier, start_node)
+        heappush(frontier, (0, start_node))
         came_from = dict()
         partial_cost = dict()
         came_from[start_node] = None
@@ -122,27 +124,30 @@ class Agent(Thread):
         current = None
 
         while not len(frontier) == 0:
-            current = heappop(frontier)
-            print("Setting current node to ", current.get_position())
+            current_priority, current = heappop(frontier)
+            # print("Setting current node to ", current.get_position())
 
             if current.is_goal():
                 break
 
             for child in current.get_children():
-                new_cost = partial_cost[current] + current.cost_to(child)
-                if child not in partial_cost or new_cost < partial_cost[child]:
-                    partial_cost[child] = new_cost
-                    priority = new_cost + child.heuristic_to_goal()
-                    frontier.put(child, priority)
+                cost_to_child = partial_cost[current] + current.cost_to(child)
+                if child not in partial_cost or cost_to_child < partial_cost[child]:
+                    partial_cost[child] = cost_to_child
+                    priority = cost_to_child + child.heuristic_to_goal()
+                    heappush(frontier, (priority, child))
                     came_from[child] = current
 
-        nodes_to_visit = []
+        self.nodes_to_visit = []
         if current.is_goal():
             while came_from[current] is not None:
-                nodes_to_visit.insert(0, came_from[current])
+                self.nodes_to_visit.insert(0, came_from[current])
                 current = came_from[current]
 
-        print("Nodes to visit ", nodes_to_visit)
+        print("Nodes to visit ")
+        for node in self.nodes_to_visit:
+            print(node.get_position())
+        self.agent_action_disp_q.put(self.nodes_to_visit.copy())
         # return came_from, partial_cost
 
         # Generate action_suite from dirty room ordered list
@@ -175,7 +180,8 @@ class Agent(Thread):
         while not self.stop_request.isSet():
             self.observe_environment_with_sensors()
             self.update_state()
-            if self.actions_planned.empty():
+            # if self.actions_planned.empty():
+            if len(self.nodes_to_visit) == 0:
                 self.plan_actions()  # TODO: Learn exploration frequency
             self.execute_next_action()
             self.wait()

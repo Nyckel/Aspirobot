@@ -1,6 +1,8 @@
 from tkinter import *
 from copy import deepcopy
 
+from node import Node
+
 
 class Display:
 
@@ -56,7 +58,10 @@ class Display:
 
         while not self.agent_move_q.empty():
             new_pos = self.agent_move_q.get_nowait()
-            self.move_agent(new_pos)
+            if len(new_pos) == 2:
+                self.move_agent(new_pos)
+            else:
+                self.draw_trajectory(new_pos)
         self.window.after(1, self.check_for_changes)
 
     def draw_room(self, cv, room):
@@ -87,6 +92,21 @@ class Display:
         for cv in self.canvas_list:
             cv.move(self.agent_image, x_shift, y_shift)
         self.agent_pos = deepcopy(new_pos)
+
+    def draw_trajectory(self, pos_list):
+        line_extremities = list()
+        line_extremities.append(pos_list[0])
+        pos_list = pos_list[1:]
+        while len(pos_list) > 0:
+            line_extremities.append(pos_list.pop(0))
+            p1 = line_extremities[0].get_position()
+            p2 = line_extremities[1].get_position()
+            for cv in self.canvas_list:
+                cv.create_line(p1[0] * self.CELL_SIZE + self.CELL_SIZE/2, p1[1] * self.CELL_SIZE + self.CELL_SIZE/2,
+                               p2[0] * self.CELL_SIZE + self.CELL_SIZE/2, p2[1] * self.CELL_SIZE + self.CELL_SIZE/2
+                               , fill="red", arrow=LAST)
+
+            line_extremities.pop(0)
 
     def on_closing(self):
         # TODO: Get event back to main and join all threads

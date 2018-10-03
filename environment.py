@@ -42,10 +42,10 @@ class Environment(Thread):
     def run(self):
         while not self.stop_request.isSet():
             time.sleep(1)
-            if self.should_there_be_a_new_dirty_space():
-                self.generate_dirt()
-            if self.should_there_be_a_new_lost_jewel():
-                self.generate_jewel()
+            # if self.should_there_be_a_new_dirty_space():
+            #     self.generate_dirt()
+            # if self.should_there_be_a_new_lost_jewel():
+            #     self.generate_jewel()
 
             try:
                 new_agent_action = self.agent_action_q.get_nowait()
