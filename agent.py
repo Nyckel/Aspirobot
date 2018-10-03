@@ -30,7 +30,6 @@ class Agent(Thread):
     GRID_HEIGHT = 10
     EXPLORATION_INTERVAL = 20
 
-    informed = False
 
     def __init__(self, room_change_q, agent_action_env_q, agent_action_disp_q):
 
@@ -42,6 +41,7 @@ class Agent(Thread):
         self.stop_request = Event()
 
         # States
+        self.informed=True
         self.dirt = []
         self.interesting_rooms = []
         self.rooms_planned = []
@@ -104,8 +104,10 @@ class Agent(Thread):
     def plan_actions(self):
         while not self.actions_planned.empty():
             self.actions_planned.get()
-
-        self.explore_a_star()
+        if self.informed :
+            self.explore_a_star()
+        else :
+            self.iterative_deep_search()
         self.exploration_interval_cnt = self.EXPLORATION_INTERVAL
 
     def explore_a_star(self):
@@ -297,7 +299,9 @@ class Agent(Thread):
             return 0, sol_found
         else :
             for child_node in node.get_children() :
-                result, = self.recursive_dls(child_node, dirt, limit,depth+1)
+                result,sol_found = self.recursive_dls(child_node, dirt, limit,depth+1)
+                if sol_found :
+                    self.rooms_planned.append(child_node)
                 return result, sol_found
             #if result == cutoff :
              #   cutoff_occured= True
@@ -311,6 +315,7 @@ class Agent(Thread):
         for depth in range (0,99):
             result , sol_found=self.depth_limited_search(dirt,depth)
             if sol_found:
+                self.rooms_planned.append()
                 return result
 
 
