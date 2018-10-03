@@ -208,6 +208,52 @@ class Agent(Thread):
         lastcoord == coord
         return 0;
 
+    #exploration non informer
+    """
+    def depth_limited_search(self,limit):
+        state_init=0
+        self.recursive_dls(state_init,limit)
+
+    def recursive_dls(self,pos,dirt , limit):
+        depth=10
+        cutoff_occured=False
+        if dirt :
+            print("sol trouvé")
+            return pos
+        elif (depth == limit): #profondeur a laquel on est actuellement
+            return 0
+        elif 1 :
+            result= self.recursive_dls(pos, dirt, limit)
+            return result
+            #if result == cutoff :
+             #   cutoff_occured= True
+            #else :
+             #   return result
+        #if cutoff_occured :
+        #   return cutoff
+
+
+    def get_next_node(self,pos):
+        node_liste=[]
+
+
+    def iterative_deep_search(self):
+        dirt=self.dirt
+        for depth in range (0,99):
+            result=self.depth_limited_search(dirt,depth)
+            if result != cutoff:
+                return result
+    """
+
+
+
+
+
+
+
+
+
+
     def explore(self):
         coord = Agent.explore_close(self)
         if(coord != 0):
