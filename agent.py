@@ -5,6 +5,7 @@ from heapq import heappop, heappush
 
 from enum import Enum
 from room import Room
+from node import Node
 
 
 class Action(Enum):
@@ -33,6 +34,7 @@ class Agent(Thread):
     def __init__(self, room_change_q, agent_action_env_q, agent_action_disp_q):
 
         super(Agent, self).__init__()
+        # Communication mechanism
         self.room_change_q = room_change_q  # Input queue where we read changes happening in the grid (seen by sensors)
         self.agent_action_env_q = agent_action_env_q  # Output queue where we write robot actions
         self.agent_action_disp_q = agent_action_disp_q  # Output queue where we write robot actions
@@ -40,9 +42,11 @@ class Agent(Thread):
 
         # States
         self.dirt = []
-        self.position = [0,0]
+        self.interesting_rooms = []
+        self.position = [0, 0]
         self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
         self.dest = []
+
         # Actions
         self.actions_possibles = [
             Action.UP,
@@ -79,7 +83,10 @@ class Agent(Thread):
         while not self.room_change_q.empty():
             room = self.room_change_q.get_nowait()
             self.grid[room.y][room.x] = room  # TODO: Maybe have a class GridRepresentation with a mutate() method
-            if room.has_dirt :
+            if room.has_dirt or room.has_jewel:
+                self.interesting_rooms.append(room)
+
+            if room.has_dirt:
                 self.dirt.append([room.get_position_x(),room.get_position_y()])
 
         # Captor.IsThereJewel(self.env,self.position)
@@ -90,6 +97,7 @@ class Agent(Thread):
         # self.grid=Environment.get_grid(self.env)
 
     def plan_actions(self):
+        # self.explore_a_star()
         # For testing purpose. TODO: Replace by exploration algorithm
         for i in range(9):
             self.actions_planned.put(Action.RIGHT)
@@ -99,6 +107,47 @@ class Agent(Thread):
             self.actions_planned.put(Action.DOWN)
             self.actions_planned.put(Action.GET_DIRT)
             self.actions_planned.put(Action.GET_JEWEL)
+
+    def explore_a_star(self):
+        best_action_suite = []
+
+        start_node = Node(self.position, self.interesting_rooms.copy())
+
+        frontier = []
+        heappush(frontier, start_node)
+        came_from = dict()
+        partial_cost = dict()
+        came_from[start_node] = None
+        partial_cost[start_node] = 0
+        current = None
+
+        while not len(frontier) == 0:
+            current = heappop(frontier)
+            print("Setting current node to ", current.get_position())
+
+            if current.is_goal():
+                break
+
+            for child in current.get_children():
+                new_cost = partial_cost[current] + current.cost_to(child)
+                if child not in partial_cost or new_cost < partial_cost[child]:
+                    partial_cost[child] = new_cost
+                    priority = new_cost + child.heuristic_to_goal()
+                    frontier.put(child, priority)
+                    came_from[child] = current
+
+        nodes_to_visit = []
+        if current.is_goal():
+            while came_from[current] is not None:
+                nodes_to_visit.insert(0, came_from[current])
+                current = came_from[current]
+
+        print("Nodes to visit ", nodes_to_visit)
+        # return came_from, partial_cost
+
+        # Generate action_suite from dirty room ordered list
+        for action in best_action_suite:
+            self.actions_planned.put(action)
 
     def execute_next_action(self):
         """ Action execution simply consists of sending what the agent does to the environment (and the display) """
@@ -127,10 +176,9 @@ class Agent(Thread):
             self.observe_environment_with_sensors()
             self.update_state()
             if self.actions_planned.empty():
-                self.plan_actions() # TODO: Learn exploration frequency
+                self.plan_actions()  # TODO: Learn exploration frequency
             self.execute_next_action()
             self.wait()
-     
 
     def join(self, timeout=None):
         self.stop_request.set()
@@ -140,9 +188,9 @@ class Agent(Thread):
         return action in self.move_actions
 
     def explore_close(self):
-        if not self.dirt :
+        if not self.dirt:
             return self.position
-        else :
+        else:
             waist = len(self.dirt)
             coorddirt = self.dirt[0]
             min = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
@@ -227,44 +275,5 @@ class Agent(Thread):
     #         explored.append(state)
     #         if self.goal_test(state):
 
-
     def goal_test(self, state):
         return len(state.dirt) == 0
-
-class Effector:
-
-    def up(self):
-        position = Agent.get_position(self)
-        if 0 <= position[1] - 1 & position[1] - 1 <= 9:
-            position[1]=position[1]-1
-            Agent.set_position(self,position)
-
-    def down(self):
-        position = Agent.get_position(self)
-        if 0<=position[1]+1 & position[1]+1<=9:
-            position[1]=position[1]+1
-            Agent.set_position(self,position)
-
-    def left(self):
-        position = Agent.get_position(self)
-        if 0 <= position[0] - 1 & position[0] - 1 <= 9:
-            position[0] =position[0] - 1
-            Agent.set_position(self,position)
-
-    def right(self):
-        position = Agent.get_position(self)
-        if 0 <= position[0] + 1 & position[0] + 1 <= 9:
-            position[0]=position[0]+1
-            Agent.set_position(self,position)
-
-    def get_dirt(self):
-        position = Agent.get_position(self)
-        actual_room = Environment.grid[position[0]][position[1]]
-        actual_room.has_dirt=False
-        actual_room.has_jewel=False
-
-    def get_jewel(self):
-        position = Agent.get_position(self)
-        actual_room = Environment.grid[position[0]][position[1]]
-        actual_room.has_jewel=False
-

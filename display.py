@@ -1,6 +1,7 @@
 from tkinter import *
 from copy import deepcopy
 
+
 class Display:
 
     CELL_SIZE = 50
