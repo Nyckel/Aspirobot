@@ -40,11 +40,11 @@ class Agent(Thread):
         self.stop_request = Event()
 
         # States
-        self.interesting_rooms = [] #rooms dirty or with jewel
-        self.rooms_planned = []
+        self.informed = True
+        self.interesting_rooms = []  # rooms dirty or with jewel
+        self.rooms_planned = [] # plan of destination
         self.position = [0, 0]
         self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
-        self.dest = [] #plan of destination
         self.exploration_interval_cnt = self.EXPLORATION_INTERVAL
 
         # Actions
