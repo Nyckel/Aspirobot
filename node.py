@@ -1,6 +1,6 @@
 class Node:
     def __init__(self, p_room, other_nodes_list):
-        # print("Creating node with pos", p_pos, "and children", len(other_nodes_list))
+        # print("Creating node with pos", p_room.get_position(), "and children", len(other_nodes_list))
         self.room = p_room
         self.other_nodes_list = other_nodes_list
 
@@ -17,7 +17,7 @@ class Node:
         return self.room.has_jewel
 
     def get_children(self):
-        # print("Getting children of", self.pos, "who has", len(self.other_nodes_list), "children")
+        # print("Getting children of", self.room.get_position(), "who has", len(self.other_nodes_list), "children")
         children = []
         for room in self.other_nodes_list:
             cp = self.other_nodes_list.copy()

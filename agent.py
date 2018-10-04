@@ -30,7 +30,6 @@ class Agent(Thread):
     GRID_HEIGHT = 10
     EXPLORATION_INTERVAL = 20
 
-
     def __init__(self, room_change_q, agent_action_env_q, agent_action_disp_q):
 
         super(Agent, self).__init__()
@@ -41,7 +40,7 @@ class Agent(Thread):
         self.stop_request = Event()
 
         # States
-        self.informed=True
+        self.informed = True
         self.dirt = []
         self.interesting_rooms = []
         self.rooms_planned = []
@@ -91,12 +90,6 @@ class Agent(Thread):
             elif room in self.interesting_rooms:
                 self.interesting_rooms.remove(room)
 
-            if room.has_dirt:
-                self.dirt.append([room.get_position_x(),room.get_position_y()])
-
-        # Captor.IsThereJewel(self.env,self.position)
-        # Captor.IsThereDirt(self.env,self.position)
-
     def update_state(self):
         pass
         # self.grid=Environment.get_grid(self.env)
@@ -104,16 +97,29 @@ class Agent(Thread):
     def plan_actions(self):
         while not self.actions_planned.empty():
             self.actions_planned.get()
-        if self.informed :
-            self.explore_a_star()
-        else :
-            self.iterative_deep_search()
-        self.exploration_interval_cnt = self.EXPLORATION_INTERVAL
 
-    def explore_a_star(self):
-        print("Explore A*", len(self.interesting_rooms))
         start_room = self.grid[self.position[1]][self.position[0]]
         start_node = Node(start_room, self.interesting_rooms.copy())
+        self.rooms_planned = []
+        self.rooms_planned.append(start_node)
+
+        if self.informed:
+            print("Explore A*", len(self.interesting_rooms))
+
+            self.explore_a_star(start_node, self.rooms_planned)
+        else:
+            self.explore_iterative_deep_search(start_node, self.rooms_planned, 99)
+            print("Here, nodes rooms to explore: ", len(self.rooms_planned))
+
+        self.agent_action_disp_q.put(self.rooms_planned.copy())
+        for node in self.rooms_planned:
+            print(node.get_position())
+        # Generate action_suite from dirty room ordered list
+        self.generate_moves_from_path()
+        self.exploration_interval_cnt = self.EXPLORATION_INTERVAL
+
+    def explore_a_star(self, start_node, output_list):
+
         frontier = []
         heappush(frontier, (0, start_node))
         came_from = dict()
@@ -124,7 +130,6 @@ class Agent(Thread):
 
         while not len(frontier) == 0:
             current_priority, current = heappop(frontier)
-            # print("Setting current node to ", current.get_position())
             if current.is_goal():
                 break
 
@@ -136,20 +141,36 @@ class Agent(Thread):
                     heappush(frontier, (priority, child))
                     came_from[child] = current
 
-        self.rooms_planned = []
-        self.rooms_planned.append(current)
+        output_list.append(current)
         if current.is_goal():
             while came_from[current] is not None:
-                self.rooms_planned.insert(0, came_from[current])
+                output_list.insert(0, came_from[current])
                 current = came_from[current]
 
-        # print("Nodes to visit ")
-        # for node in self.nodes_to_visit:
-        #     print(node.get_position())
-        self.agent_action_disp_q.put(self.rooms_planned.copy())
+    # exploration non informée
+    def depth_limited_search(self, start_node, output_list, limit):
+        return self.recursive_dls(start_node, output_list, limit, 0)
 
-        # Generate action_suite from dirty room ordered list
-        self.generate_moves_from_path()
+    def recursive_dls(self, node, output_list,limit, depth):
+        sol_found = False
+        if node.is_goal():
+            return node, True
+        elif depth == limit:  # profondeur à laquelle on est actuellement
+            return None, sol_found
+        else:
+            for child_node in node.get_children() :
+                result, sol_found = self.recursive_dls(child_node, limit, depth+1)
+                if sol_found:
+                    output_list.append(child_node)
+                return result, sol_found
+
+    def explore_iterative_deep_search(self, start_node, output_list, max_depth):
+        for depth in range(max_depth):
+            result, sol_found = self.depth_limited_search(depth, start_node, output_list)
+            if sol_found:
+                print("Sol found with depth", depth, result, result.get_position())
+                output_list.append(result)
+                break
 
     def generate_moves_from_path(self):
         line_extremities = list()
@@ -214,131 +235,3 @@ class Agent(Thread):
 
     def is_move_action(self, action):
         return action in self.move_actions
-
-    def explore_close(self):
-        if not self.dirt:
-            return self.position
-        else:
-            waist = len(self.dirt)
-            coorddirt = self.dirt[0]
-            min = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
-            coord = []
-
-            for i in self.dirt:
-                coorddirt = i
-                test = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
-                if test < min :
-                    min = test
-                    coord[:] = []
-                    coord.append(coorddirt)
-            if min < 10 :
-                return coord;
-            else :
-                return 0;
-
-    def explore_by_area(self):
-        node = []
-        waist = len(self.dirt)
-        coord = []
-        coorddirt = self.dirt[0]
-        coorddirtsecond = self.dirt[0]
-
-        min = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
-        for j in self.dirt:
-            coorddirtsecond = j
-            min = min + abs(coorddirt[0] - coorddirtsecond[0] + coorddirt[1] - coorddirtsecond[1])
-
-        for i in self.dirt:
-            coorddirt = i
-            test = abs(coorddirt[0] - self.position[0] + coorddirt[1] - self.position[1])
-            for j in self.dirt:
-                coorddirtsecond = j
-                test = test + abs(coorddirt[0] - coorddirtsecond[0] + coorddirt[1] - coorddirtsecond[1])
-            if test < min:
-                node.append(coord)
-                min = test
-                coord = coorddirt
-            else :
-                node.append(coorddirt)
-            self.dest.append(coord)
-        return coord;
-
-    def shorter_way(self):
-        node = self.dirt
-        self.explore_by_area()
-        tamp = self.get_dest()
-        node.remove(tamp)
-        waist = len(node)
-        coord = []
-        lastcoord = self.dest[0]
-        coordnode = node[0]
-        min = abs(coordnode[0] - lastcoord[0] + coordnode[1] - lastcoord[1])
-        for i in node:
-            coordnode = i
-            test = abs(coordnode[0] - lastcoord[0] + coordnode[1] - lastcoord[1])
-            if test < min:
-                min = test
-                coord = self.node[i]
-        node.remove(coord)
-        self.dest.add(coord)
-        lastcoord == coord
-        return 0;
-
-    #exploration non informer
-    def depth_limited_search(self,limit):
-        dirt=self.dirt
-        start_room = self.grid[self.position[1]][self.position[0]]
-        start_node = Node(start_room, self.interesting_rooms.copy())
-        self.recursive_dls(start_node,dirt,limit,0)
-
-    def recursive_dls(self,node ,dirt, limit,depth):
-        sol_found=False
-        if node.is_goal() :
-            return node
-        elif (depth == limit): #profondeur a laquel on est actuellement
-            return 0, sol_found
-        else :
-            for child_node in node.get_children() :
-                result,sol_found = self.recursive_dls(child_node, dirt, limit,depth+1)
-                if sol_found :
-                    self.rooms_planned.append(child_node)
-                return result, sol_found
-            #if result == cutoff :
-             #   cutoff_occured= True
-            #else :
-             #   return result
-        #if cutoff_occured :
-        #   return cutoff
-
-    def iterative_deep_search(self):
-        dirt=self.dirt
-        for depth in range (0,99):
-            result , sol_found=self.depth_limited_search(dirt,depth)
-            if sol_found:
-                self.rooms_planned.append()
-                return result
-
-
-
-
-    def explore(self):
-        coord = Agent.explore_close(self)
-        if(coord != 0):
-            return 0;
-        elif coord == self.position :
-            return self.position
-        else :
-           self.dest = Agent.explore_by_area(self)
-           self.dest = Agent.shorter_way(self)
-           return 0;
-
-    # def a_star_search(self):
-    #     frontier = []  # Initialize with start context
-    #     explored = []
-    #     while not len(frontier) == 0:
-    #         state = heappop(frontier)
-    #         explored.append(state)
-    #         if self.goal_test(state):
-
-    def goal_test(self, state):
-        return len(state.dirt) == 0

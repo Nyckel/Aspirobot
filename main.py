@@ -52,9 +52,6 @@ class Simulation:
         self.display.add_label("Environment")
         self.display.add_grid(self.env.get_grid())
 
-        # self.display.add_label("Agent's representation")
-        # self.display.add_grid(self.agent.get_grid())
-
         self.env.start()
         self.agent.start()
         self.display.start_loop()  # (blocking method)
