@@ -33,7 +33,7 @@ class Environment(Thread):
 
         self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
 
-        self.performance = 0;
+        self.performance = 50;
 
         for i in range(10):  # TODO: Replace to have a random number of dirt (in a range...) ?
             self.generate_dirt()
@@ -52,25 +52,32 @@ class Environment(Thread):
             try:
                 new_agent_action = self.agent_action_q.get_nowait()
                 if new_agent_action == Action.LEFT:
+                    self.perf_move()
                     if (self.agent_position[0] >= 1) :
                         self.agent_position[0] -= 1
                 elif new_agent_action == Action.UP:
+                    self.perf_move()
                     if (self.agent_position[1] >= 1):
                         self.agent_position[1] -= 1
                 elif new_agent_action == Action.RIGHT:
+                    self.perf_move()
                     if (self.agent_position[0] <=8 ):
                         self.agent_position[0] += 1
                 elif new_agent_action == Action.DOWN:
+                    self.perf_move()
                     if (self.agent_position[1] <= 8):
                         self.agent_position[1] += 1
                 elif new_agent_action == Action.GET_DIRT:
                     agent_room = self.grid[self.agent_position[1]][self.agent_position[0]]
+                    self.perf_dirt(agent_room)
                     if agent_room.has_dirt:
                         self.remove_dirt(agent_room)
                 elif new_agent_action == Action.GET_JEWEL:
+                    self.perf_jewel()
                     agent_room = self.grid[self.agent_position[1]][self.agent_position[0]]
                     if agent_room.has_jewel:
                         self.remove_jewel(agent_room)
+                print(self.performance)
             except Empty:
                 continue
 
@@ -144,3 +151,15 @@ class Environment(Thread):
             self.performance = ((self.performance + 11)/111)*100
         if action == Action.DOWN or Action.LEFT or Action.RIGHT or Action.UP:
             self.performance = ((self.performance - 1)/101)*100
+
+    def perf_dirt(self, room):
+        if room.has_jewel:
+            self.performance = ((self.performance - 31) / 111) * 100
+        else:
+            self.performance = ((self.performance + 11) / 111) * 100
+
+    def perf_jewel(self):
+        self.performance = ((self.performance + 11) / 111) * 100
+
+    def perf_move(self):
+        self.performance = ((self.performance - 1) / 101) * 100
