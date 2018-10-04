@@ -33,6 +33,8 @@ class Environment(Thread):
 
         self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
 
+        self.performance = 0;
+
         for i in range(10):  # TODO: Replace to have a random number of dirt (in a range...) ?
             self.generate_dirt()
 
@@ -130,3 +132,15 @@ class Environment(Thread):
         # TODO: Check if room is in viewing range of agent (for uninformed search)
         self.room_change_agent_q.put(room)
         self.room_change_display_q.put(room)
+
+    def calc_performance(self, action, room):
+        #calcul de la performance de l'aspirobot a mettre a jour a chaque action
+        if action == Action.GET_DIRT :
+            if room.has_jewel :
+                self.performance = ((self.performance - 31)/111)*100
+            else :
+                self.performance = ((self.performance + 11)/111)*100
+        if action == Action.GET_JEWEL :
+            self.performance = ((self.performance + 11)/111)*100
+        if action == Action.DOWN or Action.LEFT or Action.RIGHT or Action.UP:
+            self.performance = ((self.performance - 1)/101)*100
