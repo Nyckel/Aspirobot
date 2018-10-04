@@ -161,24 +161,24 @@ class Environment(Thread):
     def calc_performance(self, action, room):
         if action == Action.GET_DIRT :
             if room.has_jewel :
-                self.performance = ((self.performance - 31)/111)*100
+                self.performance = ((self.performance - 31)/121)*100
             else :
-                self.performance = ((self.performance + 11)/111)*100
+                self.performance = ((self.performance + 19)/121)*100
         if action == Action.GET_JEWEL :
-            self.performance = ((self.performance + 11)/111)*100
+            self.performance = ((self.performance + 19)/121)*100
         if action == Action.DOWN or Action.LEFT or Action.RIGHT or Action.UP:
             self.performance = ((self.performance - 1)/101)*100
 
     #Update performance after Get dirt action
     def perf_dirt(self, room):
         if room.has_jewel:
-            self.performance = ((self.performance - 31) / 111) * 100
+            self.performance = ((self.performance - 31) / 121) * 100
         else:
-            self.performance = ((self.performance + 11) / 111) * 100
+            self.performance = ((self.performance + 19) / 121) * 100
 
     #Update performance after Get jewel action
     def perf_jewel(self):
-        self.performance = ((self.performance + 11) / 111) * 100
+        self.performance = ((self.performance + 19) / 121) * 100
 
     #Update performance after movement action
     def perf_move(self):
