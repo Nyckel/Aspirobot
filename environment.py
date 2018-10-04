@@ -72,6 +72,8 @@ class Environment(Thread):
                     self.perf_dirt(agent_room)
                     if agent_room.has_dirt:
                         self.remove_dirt(agent_room)
+                    if agent_room.has_jewel:
+                        self.remove_jewel(agent_room)
                 elif new_agent_action == Action.GET_JEWEL:
                     self.perf_jewel()
                     agent_room = self.grid[self.agent_position[1]][self.agent_position[0]]
