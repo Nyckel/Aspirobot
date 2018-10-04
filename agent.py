@@ -4,6 +4,7 @@ from queue import Queue
 from heapq import heappop, heappush
 
 from enum import Enum
+
 from room import Room
 from node import Node
 
@@ -30,13 +31,14 @@ class Agent(Thread):
     GRID_HEIGHT = 10
     EXPLORATION_INTERVAL = 20
 
-    def __init__(self, room_change_q, agent_action_env_q, agent_action_disp_q):
+    def __init__(self, room_change_q, agent_action_env_q, agent_action_disp_q, disp_to_agent_q):
 
         super(Agent, self).__init__()
         # Communication mechanism
         self.room_change_q = room_change_q  # Input queue where we read changes happening in the grid (seen by sensors)
         self.agent_action_env_q = agent_action_env_q  # Output queue where we write robot actions
         self.agent_action_disp_q = agent_action_disp_q  # Output queue where we write robot actions
+        self.disp_to_agent_q = disp_to_agent_q
         self.stop_request = Event()
 
         # States
@@ -70,16 +72,13 @@ class Agent(Thread):
     def get_position(self):
         return self.position
 
-    def get_dest(self):
-        return self.dest
-
     def get_grid(self):
         return self.grid
 
     def set_position(self,pos):
         self.position=pos
 
-    #Observation of the environment by the aspirobot
+    # Observation of the environment by the aspirobot
     def observe_environment_with_sensors(self):
         while not self.room_change_q.empty():
             room = self.room_change_q.get_nowait()
@@ -89,10 +88,6 @@ class Agent(Thread):
             elif room in self.interesting_rooms:
                 self.interesting_rooms.remove(room)
 
-    def update_state(self):
-        pass
-        # self.grid=Environment.get_grid(self.env)
-
     def plan_actions(self):
         while not self.actions_planned.empty():
             self.actions_planned.get()
@@ -100,11 +95,9 @@ class Agent(Thread):
         start_room = self.grid[self.position[1]][self.position[0]]
         start_node = Node(start_room, self.interesting_rooms.copy())
         self.rooms_planned = []
-        self.rooms_planned.append(start_node)
 
         if self.informed:
             print("Explore A*", len(self.interesting_rooms))
-
             self.explore_a_star(start_node, self.rooms_planned)
         else:
             self.explore_iterative_deep_search(start_node, self.rooms_planned, 99)
@@ -158,14 +151,16 @@ class Agent(Thread):
             return None, sol_found
         else:
             for child_node in node.get_children() :
-                result, sol_found = self.recursive_dls(child_node, limit, depth+1)
+                result, sol_found = self.recursive_dls(child_node, output_list, limit, depth+1)
                 if sol_found:
                     output_list.append(child_node)
                 return result, sol_found
 
     def explore_iterative_deep_search(self, start_node, output_list, max_depth):
+        output_list.append(start_node)
+
         for depth in range(max_depth):
-            result, sol_found = self.depth_limited_search(depth, start_node, output_list)
+            result, sol_found = self.depth_limited_search(start_node, output_list, depth)
             if sol_found:
                 print("Sol found with depth", depth, result, result.get_position())
                 output_list.append(result)
@@ -221,12 +216,12 @@ class Agent(Thread):
     def run(self):
         while not self.stop_request.isSet():
             self.observe_environment_with_sensors()
-            self.update_state()
             if self.actions_planned.empty() or self.exploration_interval_cnt == 0:
                 self.plan_actions()  # TODO: Learn exploration frequency
             self.execute_next_action()
             self.wait()
             self.exploration_interval_cnt -= 1
+            self.check_mode_switched()
 
     def join(self, timeout=None):
         self.stop_request.set()
@@ -234,3 +229,8 @@ class Agent(Thread):
 
     def is_move_action(self, action):
         return action in self.move_actions
+
+    def check_mode_switched(self):
+        if not self.disp_to_agent_q.empty():
+            self.informed = self.disp_to_agent_q.get_nowait()
+            self.plan_actions()

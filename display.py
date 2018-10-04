@@ -6,19 +6,19 @@ class Display:
 
     CELL_SIZE = 50
 
-    def __init__(self, agent_pos, room_changes_q, agent_move_q):
+    def __init__(self, agent_pos, room_changes_q, agent_move_q, disp_to_agent_q):
         self.agent_pos = agent_pos
+        self.informed = None
 
         self.room_changes_q = room_changes_q
         self.agent_move_q = agent_move_q
+        self.disp_to_agent_q = disp_to_agent_q
 
         self.window = Tk()
         self.window.title("Aspirobot")
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.canvas_list = []
         self.arrow_list = []
-
-
 
         self.vacuum_photo = PhotoImage(file="img/vacuum.gif")
         self.dirt_photo = PhotoImage(file="img/dirt.gif")
@@ -31,8 +31,6 @@ class Display:
         tk_label = Label(self.window, text=label)
         tk_label.grid(row=0, column=grid_x)
 
-        informed_button=Checkbutton(self.window, text = "informer").grid(row=0, column=grid_x +1)
-
     def add_grid(self, grid):
         self.window.grid_size()
         new_canvas = Canvas(self.window, width=500, height=500, bd=0)
@@ -44,6 +42,12 @@ class Display:
         # TODO: Decide if vacuum should start at 0,0 or somewhere else
         self.draw_agent(new_canvas)
         self.canvas_list.append(new_canvas)
+
+    def add_switch(self):
+        self.informed = IntVar()
+        self.informed.set(1)
+        grid_x = self.window.grid_size()[0]
+        informed_button = Checkbutton(self.window, text="Informed", variable=self.informed, command=self.switch_mode).grid(row=0, column=grid_x + 1)
 
     def start_loop(self):
         self.window.after(1, self.check_for_changes)
@@ -116,6 +120,10 @@ class Display:
                                , fill="red", arrow=LAST)
                 self.arrow_list.append(new)
             line_extremities.pop(0)
+
+    def switch_mode(self):
+        print("Informed:", self.informed.get())
+        self.disp_to_agent_q.put(self.informed.get() == 1)
 
     def on_closing(self):
         # TODO: Get event back to main and join all threads

@@ -45,12 +45,16 @@ class Simulation:
         env_to_agent = Queue()  # for environment to signal its mutations to the agent
         env_to_display = Queue()  # for environment to signal its mutations to the display
 
-        self.agent = Agent(env_to_agent, agent_to_env, agent_to_display)
+        display_to_agent = Queue()  # Only used for display to tell agent to switch mode (informed/uninformed)
+
+        self.agent = Agent(env_to_agent, agent_to_env, agent_to_display, display_to_agent)
         self.env = Environment(deepcopy(self.agent.get_position()), agent_to_env, env_to_agent, env_to_display)
-        self.display = Display(deepcopy(self.agent.get_position()), env_to_display, agent_to_display)
+        self.display = Display(deepcopy(self.agent.get_position()), env_to_display, agent_to_display, display_to_agent)
 
         self.display.add_label("Environment")
         self.display.add_grid(self.env.get_grid())
+
+        self.display.add_switch()  # For switching between informed and uninformed search
 
         self.env.start()
         self.agent.start()
