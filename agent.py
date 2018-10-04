@@ -42,12 +42,12 @@ class Agent(Thread):
 
         # States
         self.informed=True
-        self.dirt = []
+        self.dirt = [] #rooms dirty or with jewel
         self.interesting_rooms = []
         self.rooms_planned = []
         self.position = [0, 0]
         self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
-        self.dest = []
+        self.dest = [] #plan of destination
         self.exploration_interval_cnt = self.EXPLORATION_INTERVAL
 
         # Actions
@@ -82,6 +82,7 @@ class Agent(Thread):
     def set_position(self,pos):
         self.position=pos
 
+    #Observation of the environment by the aspirobot
     def observe_environment_with_sensors(self):
         while not self.room_change_q.empty():
             room = self.room_change_q.get_nowait()
@@ -215,6 +216,7 @@ class Agent(Thread):
     def is_move_action(self, action):
         return action in self.move_actions
 
+    #Find if a dirty room is close to the aspirobot's position
     def explore_close(self):
         if not self.dirt:
             return self.position
@@ -236,6 +238,7 @@ class Agent(Thread):
             else :
                 return 0;
 
+    #Find the better room to go
     def explore_by_area(self):
         node = []
         waist = len(self.dirt)
@@ -263,6 +266,7 @@ class Agent(Thread):
             self.dest.append(coord)
         return coord;
 
+    #Find the way for the aspirobot
     def shorter_way(self):
         node = self.dirt
         self.explore_by_area()
@@ -319,7 +323,7 @@ class Agent(Thread):
 
 
 
-
+    #fonction to run
     def explore(self):
         coord = Agent.explore_close(self)
         if(coord != 0):
