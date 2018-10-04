@@ -18,6 +18,8 @@ class Display:
         self.canvas_list = []
         self.arrow_list = []
 
+
+
         self.vacuum_photo = PhotoImage(file="img/vacuum.gif")
         self.dirt_photo = PhotoImage(file="img/dirt.gif")
         self.jewel_photo = PhotoImage(file="img/jewel.gif")
@@ -28,6 +30,8 @@ class Display:
 
         tk_label = Label(self.window, text=label)
         tk_label.grid(row=0, column=grid_x)
+
+        informed_button=Checkbutton(self.window, text = "informer").grid(row=0, column=grid_x +1)
 
     def add_grid(self, grid):
         self.window.grid_size()

@@ -40,13 +40,11 @@ class Agent(Thread):
         self.stop_request = Event()
 
         # States
-        self.informed = True
-        self.dirt = []
-        self.interesting_rooms = []
+        self.interesting_rooms = [] #rooms dirty or with jewel
         self.rooms_planned = []
         self.position = [0, 0]
         self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
-        self.dest = []
+        self.dest = [] #plan of destination
         self.exploration_interval_cnt = self.EXPLORATION_INTERVAL
 
         # Actions
@@ -81,6 +79,7 @@ class Agent(Thread):
     def set_position(self,pos):
         self.position=pos
 
+    #Observation of the environment by the aspirobot
     def observe_environment_with_sensors(self):
         while not self.room_change_q.empty():
             room = self.room_change_q.get_nowait()
