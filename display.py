@@ -1,5 +1,7 @@
 from tkinter import *
 from copy import deepcopy
+import sys
+import os
 
 
 class Display:
@@ -20,9 +22,9 @@ class Display:
         self.canvas_list = []
         self.arrow_list = []
 
-        self.vacuum_photo = PhotoImage(file="img/vacuum.gif")
-        self.dirt_photo = PhotoImage(file="img/dirt.gif")
-        self.jewel_photo = PhotoImage(file="img/jewel.gif")
+        self.vacuum_photo = PhotoImage(file=self.resource_path("img/vacuum.gif"))
+        self.dirt_photo = PhotoImage(file=self.resource_path("img/dirt.gif"))
+        self.jewel_photo = PhotoImage(file=self.resource_path("img/jewel.gif"))
         self.agent_image = None
 
     def add_label(self, label):
@@ -128,3 +130,9 @@ class Display:
     def on_closing(self):
         # TODO: Get event back to main and join all threads
         self.window.destroy()
+
+    @staticmethod
+    def resource_path(relative_path):
+        """ Get absolute path to resource, works for dev and for PyInstaller """
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_path, relative_path)
