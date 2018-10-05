@@ -2,13 +2,13 @@ class Node:
     def __init__(self, p_room, other_nodes_list):
         # print("Creating node with pos", p_room.get_position(), "and children", len(other_nodes_list))
         self.room = p_room
-        self.other_nodes_list = other_nodes_list
+        self.children = other_nodes_list
 
     def get_position(self):
         return self.room.get_position()
 
     def is_goal(self):
-        return len(self.other_nodes_list) == 0  # As it means we would have cleaned all dirty rooms
+        return len(self.children) == 0  # As it means we would have cleaned all dirty rooms
 
     def has_dirt(self):
         return self.room.has_dirt
@@ -17,10 +17,10 @@ class Node:
         return self.room.has_jewel
 
     def get_children(self):
-        # print("Getting children of", self.room.get_position(), "who has", len(self.other_nodes_list), "children")
+        # print("Getting children of", self.room.get_position(), "who has", len(self.children), "children")
         children = []
-        for room in self.other_nodes_list:
-            cp = self.other_nodes_list.copy()
+        for room in self.children:
+            cp = self.children.copy()
             cp.remove(room)
             children.append(Node(room, cp))
 
@@ -35,7 +35,7 @@ class Node:
         remaining_items_value = 0
         distance_sum = 0
         # print("Accessing heuristics for ", self.pos, " with children ", self.other_nodes_list)
-        for room in self.other_nodes_list:
+        for room in self.children:
             # if room.has_dirt:
             #     remaining_items_value += 1
             # if room.has_jewel:
@@ -45,12 +45,3 @@ class Node:
 
     def __lt__(self, other):
         return True
-    # def generate_children(self):
-    #     for room in self.other_nodes_list:
-    #         heappush(self.childrens,
-    #                  (self.evaluate_f(room),
-    #                   Node(room.get_position(), self.other_nodes_list.copy().remove(room))))
-    #     return self.childrens
-
-    # def evaluate_f(self, room):
-

@@ -14,8 +14,8 @@ class Action(Enum):
     RIGHT = 2
     DOWN = 3
     LEFT = 4
-    GET_JEWEL = 5
-    GET_DIRT = 6
+    GRAB = 5
+    SUCK = 6
     WAIT = 7
 
 
@@ -43,11 +43,15 @@ class Agent(Thread):
 
         # States
         self.informed = True
+        self.exploration_interval_cnt = self.EXPLORATION_INTERVAL
+
+        # Beliefs
         self.interesting_rooms = []  # rooms dirty or with jewel
-        self.rooms_planned = [] # plan of destination
         self.position = [0, 0]
         self.grid = [[Room(x, y) for x in range(self.GRID_WIDTH)] for y in range(self.GRID_HEIGHT)]
-        self.exploration_interval_cnt = self.EXPLORATION_INTERVAL
+
+        # Intentions
+        self.rooms_planned = []  # plan of destination
 
         # Actions
         self.actions_possibles = [
@@ -55,8 +59,8 @@ class Agent(Thread):
             Action.RIGHT,
             Action.DOWN,
             Action.LEFT,
-            Action.GET_JEWEL,
-            Action.GET_DIRT,
+            Action.GRAB,
+            Action.SUCK,
             Action.WAIT
         ]
 
@@ -75,14 +79,14 @@ class Agent(Thread):
     def get_grid(self):
         return self.grid
 
-    def set_position(self,pos):
-        self.position=pos
+    def set_position(self, pos):
+        self.position = pos
 
     # Observation of the environment by the aspirobot
     def observe_environment_with_sensors(self):
         while not self.room_change_q.empty():
             room = self.room_change_q.get_nowait()
-            self.grid[room.y][room.x] = room  # TODO: Maybe have a class GridRepresentation with a mutate() method
+            self.grid[room.y][room.x] = room
             if room.has_dirt or room.has_jewel:
                 self.interesting_rooms.append(room)
             elif room in self.interesting_rooms:
@@ -97,15 +101,17 @@ class Agent(Thread):
         self.rooms_planned = []
 
         if self.informed:
-            print("Explore A*", len(self.interesting_rooms))
+            print("Explore A* for", len(self.interesting_rooms), "nodes")
             self.explore_a_star(start_node, self.rooms_planned)
         else:
-            self.explore_iterative_deep_search(start_node, self.rooms_planned, 99)
-            print("Here, nodes rooms to explore: ", len(self.rooms_planned))
+            print("Explore UCS for", len(self.interesting_rooms), "nodes")
+            self.explore_ucs(start_node, self.rooms_planned)
+            # print("Explore IDS for", len(self.interesting_rooms), "nodes")
+            # self.explore_iterative_deep_search(start_node, self.rooms_planned, 99)
 
         self.agent_action_disp_q.put(self.rooms_planned.copy())
-        for node in self.rooms_planned:
-            print(node.get_position())
+        # for node in self.rooms_planned:
+        #     print(node.get_position())
         # Generate action_suite from dirty room ordered list
         self.generate_moves_from_path()
         self.exploration_interval_cnt = self.EXPLORATION_INTERVAL
@@ -139,18 +145,46 @@ class Agent(Thread):
                 output_list.insert(0, came_from[current])
                 current = came_from[current]
 
+    def explore_ucs(self, start_node, output_list):
+
+        frontier = []
+        heappush(frontier, (0, start_node))
+        came_from = dict()
+        partial_cost = dict()
+        came_from[start_node] = None
+        partial_cost[start_node] = 0
+        current = None
+
+        while not len(frontier) == 0:
+            current_priority, current = heappop(frontier)
+            if current.is_goal():
+                break
+
+            for child in current.get_children():
+                cost_to_child = partial_cost[current] + current.cost_to(child)
+                if child not in partial_cost or cost_to_child < partial_cost[child]:
+                    partial_cost[child] = cost_to_child
+                    heappush(frontier, (cost_to_child, child))
+                    came_from[child] = current
+
+        output_list.append(current)
+        if current.is_goal():
+            while came_from[current] is not None:
+                output_list.insert(0, came_from[current])
+                current = came_from[current]
+
     # exploration non informée
     def depth_limited_search(self, start_node, output_list, limit):
         return self.recursive_dls(start_node, output_list, limit, 0)
 
-    def recursive_dls(self, node, output_list,limit, depth):
+    def recursive_dls(self, node, output_list, limit, depth):
         sol_found = False
         if node.is_goal():
             return node, True
         elif depth == limit:  # profondeur à laquelle on est actuellement
             return None, sol_found
         else:
-            for child_node in node.get_children() :
+            for child_node in node.get_children():
                 result, sol_found = self.recursive_dls(child_node, output_list, limit, depth+1)
                 if sol_found:
                     output_list.append(child_node)
@@ -184,10 +218,10 @@ class Agent(Thread):
                 self.actions_planned.put(Action.UP)
             for i in range(-y_diff):
                 self.actions_planned.put(Action.DOWN)
-            if line_extremities[1].has_jewel():  # TODO: Find a way to make that accessible from Node obj
-                self.actions_planned.put(Action.GET_JEWEL)
-            if line_extremities[1].has_dirt():  # TODO: Find a way to make that accessible from Node obj
-                self.actions_planned.put(Action.GET_DIRT)
+            if line_extremities[1].has_jewel():
+                self.actions_planned.put(Action.GRAB)
+            if line_extremities[1].has_dirt():
+                self.actions_planned.put(Action.SUCK)
 
             line_extremities.pop(0)
 
@@ -217,7 +251,7 @@ class Agent(Thread):
         while not self.stop_request.isSet():
             self.observe_environment_with_sensors()
             if self.actions_planned.empty() or self.exploration_interval_cnt == 0:
-                self.plan_actions()  # TODO: Learn exploration frequency
+                self.plan_actions()
             self.execute_next_action()
             self.wait()
             self.exploration_interval_cnt -= 1

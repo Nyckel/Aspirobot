@@ -2,14 +2,13 @@
 class Room:
 
     def __init__(self, x, y):
-        #coordinates
+        # coordinates
         self.x = x
         self.y = y
 
-        #state of the room
+        # state of the room
         self.has_dirt = False
         self.has_jewel = False
-
 
     def get_position(self):
         return self.x, self.y

@@ -41,7 +41,6 @@ class Display:
             for j in range(len(grid[0])):
                 self.draw_room(new_canvas, grid[j][i])
 
-        # TODO: Decide if vacuum should start at 0,0 or somewhere else
         self.draw_agent(new_canvas)
         self.canvas_list.append(new_canvas)
 
@@ -128,7 +127,6 @@ class Display:
         self.disp_to_agent_q.put(self.informed.get() == 1)
 
     def on_closing(self):
-        # TODO: Get event back to main and join all threads
         self.window.destroy()
 
     @staticmethod
