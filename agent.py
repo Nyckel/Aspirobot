@@ -104,10 +104,10 @@ class Agent(Thread):
             print("Explore A* for", len(self.interesting_rooms), "nodes")
             self.explore_a_star(start_node, self.rooms_planned)
         else:
-            print("Explore UCS for", len(self.interesting_rooms), "nodes")
-            self.explore_ucs(start_node, self.rooms_planned)
-            # print("Explore IDS for", len(self.interesting_rooms), "nodes")
-            # self.explore_iterative_deep_search(start_node, self.rooms_planned, 99)
+            # print("Explore UCS for", len(self.interesting_rooms), "nodes")
+            # self.explore_ucs(start_node, self.rooms_planned)
+            print("Explore IDS for", len(self.interesting_rooms), "nodes")
+            self.explore_iterative_deep_search(start_node, self.rooms_planned, 99)
 
         self.agent_action_disp_q.put(self.rooms_planned.copy())
         # for node in self.rooms_planned:
